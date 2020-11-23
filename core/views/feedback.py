@@ -20,6 +20,6 @@ class FeedbackView(APIView):
                                   fs.validated_data['message'],
                                   request.user.email,
                                   (settings.FEEDBACK_EMAIL,))
-            return Response(status=status.HTTP_202_ACCEPTED, data=fs.errors)
+            return Response(status=status.HTTP_202_ACCEPTED, data=fs.validated_data)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST, data=fs.errors)
