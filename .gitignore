@@ -1,0 +1,5 @@
+__pycache__
+dump.rdb
+db.sqlite3
+migrations
+.gitignore
