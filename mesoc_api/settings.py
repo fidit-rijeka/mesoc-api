@@ -129,6 +129,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST_USER = 'noreply'
 EMAIL_HOST_PASSWORD = 'test'
 DEFAULT_FROM_EMAIL = 'noreply@mesoc.dev'
+FEEDBACK_EMAIL = 'info@mesoc-project.eu'
 
 # Verification and password reset
 

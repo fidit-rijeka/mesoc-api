@@ -2,6 +2,7 @@ from django.urls import include, path
 
 from rest_framework.routers import SimpleRouter
 
+from .views.feedback import FeedbackView
 from .views.login import LoginView
 from .views.user import UserViewSet
 from .views.password import PasswordResetViewSet
@@ -16,4 +17,5 @@ router.register('account/password_reset', PasswordResetViewSet, basename='passwo
 urlpatterns = [
     path('', include(router.urls)),
     path('account/login/', LoginView.as_view()),
+    path('feedback/', FeedbackView.as_view())
 ]
