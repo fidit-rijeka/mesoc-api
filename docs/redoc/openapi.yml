@@ -1,0 +1,414 @@
+openapi: 3.0.2
+info:
+  title: 'MESOC REST API'
+  version: '0.1'
+paths:
+  /users/:
+    post:
+      operationId: Create user
+      description: 'Register user with the specified email address and password. On successful register, a verification
+      email will be sent to the user from the email address configured in `settings.DEFAULT_FROM_EMAIL`.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+#          application/x-www-form-urlencoded:
+#            schema:
+#              $ref: '#/components/schemas/User'
+#          multipart/form-data:
+#            schema:
+#              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormError'
+          description: ''
+      tags:
+      - users
+  /users/{id}/:
+    put:
+      operationId: Update user
+      description: 'Requires the user to be authenticated, verified and associated with `id`.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this user.
+        schema:
+          type: string
+          format: number
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+#          application/x-www-form-urlencoded:
+#            schema:
+#              $ref: '#/components/schemas/User'
+#          multipart/form-data:
+#            schema:
+#              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormError'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+          description: 'User with the specified `id` does not exist.'
+      security:
+        - DRFToken: []
+      tags:
+        - users
+    patch:
+      operationId: Partial user update
+      description: 'Requires the user to be authenticated, verified and associated with `id`.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying this user.
+        schema:
+          type: string
+          format: number
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+#          application/x-www-form-urlencoded:
+#            schema:
+#              $ref: '#/components/schemas/User'
+#          multipart/form-data:
+#            schema:
+#              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormError'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+          description: 'User with the specified `id` does not exist.'
+      security:
+        - DRFToken: []
+      tags:
+      - users
+  /account/verification/:
+    post:
+      operationId: Resend verification email
+      description:
+        "Resend verification email to the user's email address. Requires the user to be authenticated."
+      responses:
+        '204':
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormError'
+          description: ''
+      security:
+        - DRFToken: []
+      tags:
+      - account
+  /account/verification/{id}/:
+    patch:
+      operationId: Update verification.
+      description: 'Verify user. Requires the user to be authenticated and associated with `id`.'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: "Verification UUID associated with the user."
+        schema:
+          type: string
+          format: uuid
+          pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Verification'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+          description: 'Verification request with the specified `id` does not exist.'
+      security:
+        - DRFToken: []
+      tags:
+      - account
+  /account/password_reset/:
+    post:
+      operationId: 'Send password reset email'
+      description:
+        "Send password reset email to the user's email address."
+      responses:
+        '202':
+          description: 'Email is sent to the user or there are no users with the specified email.'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormError'
+          description: 'Bad Request'
+      tags:
+      - account
+  /account/password_reset/{id}/:
+    patch:
+      operationId: Reset password
+      description: ''
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: "UUID associated with the user's password request."
+        schema:
+          type: string
+          format: 'uuid'
+          pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordReset'
+      responses:
+        '200':
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormError'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+          description: 'Password reset request with the specified `id` does not exist.'
+      tags:
+      - account
+  /account/login/:
+    post:
+      operationId: Login
+      description: 'Create or return authentication token associated with the user.'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthToken'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthToken'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormError'
+          description: ''
+      tags:
+      - account
+  /feedback/:
+    post:
+      operationId: Create feedback
+      description:
+        'Send feedback to the email specified in `settings.FEEDBACK_EMAIL`. Requires the user to be authenticated and
+        verified.'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Feedback'
+#          application/x-www-form-urlencoded:
+#            schema:
+#              $ref: '#/components/schemas/Feedback'
+#          multipart/form-data:
+#            schema:
+#              $ref: '#/components/schemas/Feedback'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feedback'
+          description: ''
+      security:
+        - 'DRFToken': []
+      tags:
+      - feedback
+components:
+  schemas:
+    AuthToken:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+          description: "User's email address."
+          example: 'user@example.org'
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+          maxLength: 128
+          example: 'examplepassword123'
+        token:
+          type: string
+          readOnly: true
+          example: '1ba542f38c8353f4f584035cfd97f617e881b538'
+      required:
+      - username
+      - password
+    Feedback:
+      type: object
+      properties:
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: 'Message subject'
+          description: 'Email subject.'
+        message:
+          type: string
+          minLength: 120
+          maxLength: 1200
+          example: 'Email message body.'
+          description: 'Email message.'
+      required:
+        - subject
+        - message
+    FormError:
+      type: object
+      properties:
+        field:
+          type: array
+          items:
+            type: string
+          description: 'Errors related to the specified field.'
+          example: ['This field is required.']
+        non_field_errors:
+          type: array
+          items:
+            type: string
+          description: 'Errors not related to any specific field.'
+          example: ['Unable to log in with provided credentials.']
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+          maxLength: 128
+          description:
+            "Password must contain both letters and numbers, must not be common, and it must be sufficiently different
+            from the other user attributes, see Django's
+            [included validators](https://docs.djangoproject.com/en/3.1/topics/auth/passwords/#included-validators) and
+            `settings.AUTH_PASSWORD_VALIDATORS`."
+        verified:
+          type: boolean
+          readOnly: true
+        last_login:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - email
+      - password
+      uniqueItems: true
+    HttpError:
+      type: object
+      properties:
+        detail:
+          type: array
+          items:
+            type: string
+          description: 'HTTP error message.'
+          example: ['Not found.']
+    PasswordReset:
+      type: object
+      properties:
+        uuid:
+          type: string
+          writeOnly: true
+          format: uuid
+          pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
+          description: "UUID associated with the user's password request."
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+          maxLength: 128
+          example: 'newexamplepassword123'
+      required:
+        - uuid
+        - password
+    Verification:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Verification UUID associated with the user.'
+          readOnly: true
+          format: uuid
+          pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
+        verified:
+          type: boolean
+          readOnly: true
+          description: "Verification status."
+  securitySchemes:
+    DRFToken:
+      type: http
+      scheme: 'Bearer'
+      description:
+        'Default authentication scheme based on Djago Rest Framework authtoken implementation.
+        See [DRF documentation](https://www.django-rest-framework.org/api-guide/authentication/#tokenauthentication) for
+        additional details.'
