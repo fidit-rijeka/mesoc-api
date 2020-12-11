@@ -147,7 +147,7 @@ CELERY_BROKER_URL = 'redis://localhost:6379'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication'
+        'core.authentication.BearerTokenAuthentication'
     ],
 
     'DEFAULT_METADATA_CLASS': None
