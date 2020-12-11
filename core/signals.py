@@ -4,16 +4,14 @@ from django.dispatch import receiver
 from django.db.models import signals
 from django.template.loader import render_to_string
 
-from rest_framework.authtoken.models import Token
-
 from . import tasks
-from .models import PasswordReset, Verification
+from .models import AuthToken, PasswordReset, Verification
 
 
 @receiver(signals.post_save, sender=auth.get_user_model())
 def generate_user_token(sender, instance, created, **kwargs):
     if created:
-        Token.objects.create(user=instance)
+        AuthToken.objects.create(user=instance)
 
 
 @receiver(signals.post_save, sender=auth.get_user_model())
