@@ -1,0 +1,82 @@
+{
+  "title": "Bilbao Effects and Narrative Defects",
+  "cells": [
+    {
+      "order": 3,
+      "classification": 0.45,
+      "num_keywords": 25,
+      "variables": [
+        {
+          "id": 4,
+          "name": "sense of socio-cultural belonging",
+          "num_ontology_categories": 4,
+          "num_keyword_vars": 15,
+		  "strength" : 0.15
+        },
+        {
+          "id": 5,
+          "name": "sense of community",
+          "num_keyword_vars": 5,
+          "num_ontology_categories": 25,
+		  "strength" : 0.25
+        }
+      ]
+    },
+    {
+      "order": 11,
+      "classification": 0.35,
+      "num_keywords": 15,
+      "variables": [
+        {
+          "id": 3,
+          "name": "reactivating city's economy",
+          "num_ontology_categories": 4,
+          "num_keyword_vars": 15,
+		  "strength" : 0.15
+        }
+      ]
+    },
+    {
+      "order": 17,
+      "classification": 0.75,
+      "num_keywords": 35,
+      "variables": [
+        {
+          "id": 4,
+          "name": "sense of socio-cultural belonging",
+          "num_ontology_categories": 7,
+          "num_keyword_vars": 45,
+		  "strength" : 0.45
+        },
+        {
+          "id": 5,
+          "name": "sense of community",
+          "num_keyword_vars": 6,
+          "num_ontology_categories": 27,
+		  "strength" : 0.27
+        },
+		{
+          "id": 3,
+          "name": "reactivating city's economy",
+          "num_keyword_vars": 6,
+          "num_ontology_categories": 22,
+		  "strength" : 0.22
+        }
+      ]
+    },
+    {
+      "order": 21,
+      "classification": 0.15,
+      "num_keywords": 20,
+      "variables": [
+        {
+          "id": 8,
+          "name": "generation of tourism",
+          "num_ontology_categories": 4,
+          "num_keyword_vars": 20,
+		  "strength" : 0.2
+        }
+      ]
+    }
+  ]
+}

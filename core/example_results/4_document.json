@@ -1,0 +1,61 @@
+{
+  "title": "The Return on Investment of the Guggenheim Museum Bilbao",
+  "cells": [
+    {
+      "order": 12,
+      "classification": 0.25,
+      "num_keywords": 39,
+      "variables": [
+        {
+          "id": 4,
+          "name": "sense of socio-cultural belonging",
+          "num_ontology_categories": 5,
+          "num_keyword_vars": 39,
+		  "strength" : 0.39
+        }
+      ]
+    },
+    {
+      "order": 18,
+      "classification": 0.75,
+      "num_keywords": 35,
+      "variables": [
+        {
+          "id": 4,
+          "name": "sense of socio-cultural belonging",
+          "num_ontology_categories": 5,
+          "num_keyword_vars": 39,
+		  "strength" : 0.39
+        },
+        {
+          "id": 8,
+          "name": "generation of tourism",
+          "num_keyword_vars": 4,
+          "num_ontology_categories": 20,
+		  "strength" : 0.2
+        },
+		{
+          "id": 9,
+          "name": "accessibility improvement",
+          "num_keyword_vars": 8,
+          "num_ontology_categories": 40,
+		  "strength" : 0.4
+        }
+      ]
+    },
+    {
+      "order": 25,
+      "classification": 0.4,
+      "num_keywords": 35,
+      "variables": [
+        {
+          "id": 2,
+          "name": "public and private investments",
+          "num_ontology_categories": 5,
+          "num_keyword_vars": 35,
+		  "strength" : 0.35
+        }
+      ]
+    }
+  ]
+}

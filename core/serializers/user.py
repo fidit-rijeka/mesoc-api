@@ -1,16 +1,18 @@
 from django.contrib import auth
 from django.core import exceptions as django_exceptions
 
-from rest_framework.serializers import CharField, ModelSerializer, ValidationError
+from rest_framework.reverse import reverse
+from rest_framework.serializers import CharField, ModelSerializer, SerializerMethodField, ValidationError
 
 
 class UserSerializer(ModelSerializer):
     password = CharField(max_length=128, required=True, write_only=True)
+    documents = SerializerMethodField(read_only=True)
 
     class Meta:
         model = auth.get_user_model()
-        fields = ('id', 'email', 'password', 'verified', 'last_login',)
-        read_only_fields = ('id', 'last_login', 'verified')
+        fields = ('id', 'email', 'password', 'verified', 'last_login', 'documents')
+        read_only_fields = ('id', 'last_login', 'verified', 'documents')
 
     def validate(self, attrs):
         user = self.Meta.model(**attrs)
@@ -32,4 +34,7 @@ class UserSerializer(ModelSerializer):
         if password:
             instance.set_password(validated_data['password'])
 
-        return super().update(instance, validated_data)
+        return self.Meta.model.objects.create_user(validated_data['email'], validated_data['password'])
+
+    def get_documents(self, obj):
+        return reverse('user-documents', args=(obj.pk,), request=self.context['request'])
