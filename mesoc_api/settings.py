@@ -124,6 +124,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Email
 
@@ -158,3 +159,9 @@ REST_FRAMEWORK = {
 # CORS
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+# Other
+
+FILE_MAX_SIZE = 31457280  # 30 MiB
+FILE_ALLOWED_MIME_TYPES = ('text/plain', 'application/pdf')
+FILE_ALLOWED_EXTENSIONS = ('txt', 'pdf')

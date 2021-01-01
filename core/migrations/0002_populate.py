@@ -2,7 +2,6 @@ from django.contrib import auth
 from django.db import migrations
 from django.db.models import signals
 
-from ..models import Verification
 from ..signals import send_verification_email
 
 LANGUAGES = (
@@ -104,33 +103,57 @@ LANGUAGES = (
     }
 )
 
+COUNTRIES = (
+    {
+        'name': 'Unknown',
+    },
+    {
+        'name': 'Germany',
+    },
+    {
+        'name': 'Croatia',
+    },
+    {
+        'name': 'United Kingdom of Great Britain and Ireland'
+    },
+    {
+        'name': 'France'
+    }
+)
+
 CITIES = (
     {
         'name': 'Berlin',
         'latitude': 52.520008,
-        'longitude': 13.404954
+        'longitude': 13.404954,
+        'country': COUNTRIES[1],
     },
     {
         'name': 'London',
         'latitude': 51.509865,
-        'longitude': -0.118092
+        'longitude': -0.118092,
+        'country': COUNTRIES[3],
     },
     {
         'name': 'Paris',
         'latitude': 48.856613,
-        'longitude': 2.352222
+        'longitude': 2.352222,
+        'country': COUNTRIES[1],
     },
     {
         'name': 'Rijeka',
         'latitude': 45.34306,
-        'longitude': 14.40917
+        'longitude': 14.40917,
+        'country': COUNTRIES[2],
     },
     {
         'name': 'Unknown',
         'latitude': 15.489444,
-        'longitude': 43.700278
+        'longitude': 43.700278,
+        'country': COUNTRIES[0],
     }
 )
+
 
 USERS = (
     {
@@ -158,14 +181,25 @@ def populate_languages(apps, schema_editora):
         Language.objects.create(**language)
 
 
+def populate_countries(apps, schema_editor):
+    Country = apps.get_model('core', 'Country')
+    Country.objects.all().delete()
+    for country in COUNTRIES:
+        Country.objects.create(**country)
+
+
 def populate_cities(apps, schema_editor):
     City = apps.get_model('core', 'City')
+    Country = apps.get_model('core', 'Country')
     City.objects.all().delete()
     for city in CITIES:
-        City.objects.create(**city)
+        country = Country.objects.get(**city.pop('country'))
+        City.objects.create(**city, country=country)
 
 
 def populate_users(apps, schema_editor):
+    # Verification = apps.get_model('core', 'Verification')
+    from ..models import Verification
     signals.post_save.disconnect(send_verification_email, Verification)
 
     User = auth.get_user_model()
@@ -187,6 +221,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(populate_languages),
+        migrations.RunPython(populate_countries),
         migrations.RunPython(populate_cities),
         migrations.RunPython(populate_users),
     ]
