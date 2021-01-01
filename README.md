@@ -57,4 +57,10 @@ CORS_ALLOW_ALL_ORIGINS = True
 #     "http://localhost:8080",
 #     "http://127.0.0.1:9000"
 # ]
+
+# Other
+FILE_MAX_SIZE = 31457280  # 30 MiB
+FILE_ALLOWED_MIME_TYPES = ('text/plain', 'application/pdf')
+FILE_ALLOWED_EXTENSIONS = ('txt', 'pdf')
+
 ```
