@@ -277,6 +277,254 @@ paths:
         - 'DRFToken': []
       tags:
       - feedback
+  /documents/:
+    get:
+      operationId: Get documents
+      description: 'Get all documents uploaded by the user.'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Document'
+          description: ''
+      tags:
+        - documents
+    post:
+      operationId: Create document
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DocumentUpload'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormError'
+          description: ''
+      tags:
+        - documents
+  /documents/{id}/:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: 'uuid'
+          pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
+    get:
+      operationId: Get document
+      description: 'Get document uploaded by the user.'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+          description: 'Document with the specified `id` does not belong to the authenticated user or does not exist.'
+      tags:
+        - documents
+    patch:
+      operationId: Update document
+      description: |
+        Update document state with one the following values:
+        * `processing` - document is still processing
+        * `processed` - document is successfully processed
+        * `failed` - an error occured while processing document
+        * `dismissed` - same as `failed`, but acknowledged by user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/State'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/State'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/State'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormError'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+          description: 'Document with the specified `id` does not belong to the authenticated user or does not exist.'
+      tags:
+        - documents
+  /documents/{id}/heatmap/:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: 'uuid'
+          pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
+    get:
+      operationId: Get heatmap
+      description: 'Get individual cells comprising document heatmap. Order of cells corresponds to 3x10 matrix in
+      column-major order. Will return empty array if document state is not `processed`.'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cell'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+          description: 'Document with the specified `id` does not belong to the authenticated user or does not exist.'
+      tags:
+        - documents
+  /cells/{id}/:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      operationId: Get heatmap cell
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Cell'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+          description: 'Cell with the specified `id` is not associated with the authenticated user or does not exist.'
+      tags:
+        - documents
+  /cells/{id}/variables/:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      operationId: Get heatmap cell variables
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Variable'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+          description: 'Cell with the specified `id` is not associated with the authenticated user or does not exist.'
+      tags:
+        - documents
+  /languages/:
+    get:
+      operationId: Get languages
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Language'
+          description: ''
+      tags:
+        - languages
+  /languages/{id}/:
+    get:
+      operationId: Get language
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Language'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+          description: 'Language with the specified `id` does not exist.'
+      tags:
+        - languages
+  /locations/:
+    get:
+      operationId: Get locations
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Location'
+          description: ''
+      tags:
+        - locations
+  /locations/{id}/:
+    get:
+      operationId: Get location
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+          description: 'Location with the specified `id` does not exist.'
+      tags:
+        - locations
 components:
   schemas:
     AuthToken:
@@ -404,6 +652,151 @@ components:
           type: boolean
           readOnly: true
           description: "Verification status."
+    Language:
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 2
+          minLength: 2
+          example: 'hr'
+        name:
+          type: string
+          maxLength: 20
+          minLength: 2
+          example: 'Croatian'
+        url:
+          type: string
+          format: url
+          example: 'http://api.mesoc.dev/languages/2/'
+    Location:
+      type: object
+      properties:
+        city:
+          type: string
+          maxLength: 58
+          minLength: 1
+          example: 'Rijeka'
+        longitude:
+          type: number
+          example: 14.4091700000000000
+        latitude:
+          type: number
+          example: 45.3430600000000000
+        country:
+          type: string
+          maxLength: 56
+          example: 'Croatia'
+        url:
+          type: string
+          format: url
+          example: 'http://api.mesoc.dev/locations/4/'
+    State:
+      type: object
+      properties:
+        state:
+          type: string
+          example: 'dismissed'
+          description: 'Document state, possible values: `processing`, `failed`, `processed`, `dismissed`.'
+    Document:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 100
+          example: 'Necronomicon'
+          uniqueItems: true
+        uploaded_at:
+          type: string
+          format: datetime
+          example: '2020-12-31T17:08:06.018899Z'
+        state:
+          type: string
+          example: 'processing'
+          description: 'Document state, possible values: `processing`, `failed`, `processed`, `dismissed`.'
+        language:
+          $ref: '#/components/schemas/Language'
+        location:
+          $ref: '#/components/schemas/Location'
+        heatmap:
+          type: string
+          format: url
+          example: 'http://api.mesoc.dev/documents/bec0f39a-503d-413e-968f-a289f3420621/heatmap/'
+        user:
+          type: string
+          format: url
+          example: 'http://api.mesoc.dev/users/1/'
+        url:
+          type: string
+          format: url
+          example: 'http://api.mesoc.dev/documents/bec0f39a-503d-413e-968f-a289f3420621/'
+    DocumentUpload:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 100
+          example: 'My document'
+          uniqueItems: true
+        language:
+          type: string
+          format: url
+          description: 'Language uniform resource locator.'
+          example: 'http://api.mesoc.dev/languages/2/'
+        location:
+          type: string
+          format: url
+          description: 'Location uniform resource locator.'
+          example: 'http://api.mesoc.dev/locations/2/'
+        file:
+          type: string
+          format: file
+          description: 'Text or PDF file to upload.'
+          example: '/home/mulder/proof.pdf'
+    Cell:
+      type: object
+      properties:
+        order:
+          type: integer
+          example: 5
+        classification:
+          type: number
+          example: 0.7
+        num_keywords:
+          type: integer
+          example: 1
+        variables:
+          type: string
+          format: url
+          example: 'https://api.mesoc.dev/cells/4/variables/'
+        document:
+          type: string
+          format: url
+          example: 'https://api.mesoc.dev/documents/bec0f39a-503d-413e-968f-a289f3420621/'
+        url:
+          type: string
+          format: url
+          example: 'http://api.mesoc.dev/cells/4/'
+    Variable:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 30
+          example: 'sense of socio-cultural belonging'
+        num_ontology_categories:
+          type: integer
+          example: 2
+        num_keyword_vars:
+          type: integer
+          example: 3
+        strength:
+          type: number
+          example: 0.62
+        cell:
+          type: string
+          format: url
+          example: 'http://api.mesoc.dev/cells/4/'
   securitySchemes:
     DRFToken:
       type: http
