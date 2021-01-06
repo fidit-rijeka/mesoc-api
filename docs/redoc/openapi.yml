@@ -280,6 +280,19 @@ paths:
   /documents/:
     get:
       operationId: Get documents
+      parameters:
+        - in: query
+          name: state
+          schema:
+            type: string
+            enum:
+              - processing
+              - processed
+              - failed
+              - dismissed
+            example: 'processed'
+          required: false
+          description: 'Matches any document in a specified state.'
       description: 'Get all documents uploaded by the user.'
       responses:
         '200':
