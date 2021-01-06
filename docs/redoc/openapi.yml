@@ -464,6 +464,14 @@ paths:
   /languages/:
     get:
       operationId: Get languages
+      parameters:
+        - in: query
+          name: language
+          schema:
+            type: string
+            example: 'croatian'
+          required: false
+          description: "Matches any language whose name starts with the specified value."
       responses:
         '200':
           content:
@@ -496,6 +504,21 @@ paths:
   /locations/:
     get:
       operationId: Get locations
+      parameters:
+        - in: query
+          name: city
+          schema:
+            type: string
+            example: 'rijeka'
+          required: false
+          description: "Matches any city whose name starts with the specified value."
+        - in: query
+          name: country
+          schema:
+            type: string
+            example: 'croatia'
+          required: false
+          description: "Matches any country whose name starts with the specified value."
       responses:
         '200':
           content:
