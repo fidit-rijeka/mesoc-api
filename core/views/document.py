@@ -21,7 +21,15 @@ class DocumentViewSet(ModelViewSet):
     }
 
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
+        qs = self.queryset.filter(user=self.request.user)
+
+        state = self.request.query_params.get('state', '')
+        if state in qs.model.STATES.values():
+            state = getattr(qs.model, state.upper())
+        else:
+            state = ''
+
+        return qs.filter(state=state) if state else qs
 
     @action(methods=('get',), detail=True)
     def heatmap(self, request, pk=None,):
