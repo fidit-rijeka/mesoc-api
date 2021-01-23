@@ -1,9 +1,9 @@
 openapi: 3.0.2
 info:
   title: 'MESOC REST API'
-  version: '0.1'
+  version: '0.3'
 paths:
-  /users/:
+  /account/:
     post:
       operationId: Create user
       description: 'Register user with the specified email address and password. On successful register, a verification
@@ -14,12 +14,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/User'
-#          application/x-www-form-urlencoded:
-#            schema:
-#              $ref: '#/components/schemas/User'
-#          multipart/form-data:
-#            schema:
-#              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
       responses:
         '201':
           content:
@@ -34,75 +34,21 @@ paths:
                 $ref: '#/components/schemas/FormError'
           description: ''
       tags:
-      - users
-  /users/{id}/:
-    put:
-      operationId: Update user
-      description: 'Requires the user to be authenticated, verified and associated with `id`.'
-      parameters:
-      - name: id
-        in: path
-        required: true
-        description: A unique integer value identifying this user.
-        schema:
-          type: string
-          format: number
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/User'
-#          application/x-www-form-urlencoded:
-#            schema:
-#              $ref: '#/components/schemas/User'
-#          multipart/form-data:
-#            schema:
-#              $ref: '#/components/schemas/User'
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FormError'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HttpError'
-          description: 'User with the specified `id` does not exist.'
-      security:
-        - DRFToken: []
-      tags:
-        - users
+      - account
     patch:
       operationId: Partial user update
-      description: 'Requires the user to be authenticated, verified and associated with `id`.'
-      parameters:
-      - name: id
-        in: path
-        required: true
-        description: A unique integer value identifying this user.
-        schema:
-          type: string
-          format: number
+      description: 'Requires the user to be authenticated and verified.'
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/User'
-#          application/x-www-form-urlencoded:
-#            schema:
-#              $ref: '#/components/schemas/User'
-#          multipart/form-data:
-#            schema:
-#              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
       responses:
         '200':
           content:
@@ -116,47 +62,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/FormError'
           description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HttpError'
-          description: 'User with the specified `id` does not exist.'
       security:
         - DRFToken: []
       tags:
-      - users
+        - account
   /account/verification/:
     post:
       operationId: Resend verification email
       description:
         "Resend verification email to the user's email address. Requires the user to be authenticated."
       responses:
-        '204':
+        '202':
           description: ''
         '400':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FormError'
-          description: ''
+                $ref: '#/components/schemas/HttpError'
+          description: 'User is already verified.'
       security:
         - DRFToken: []
       tags:
       - account
-  /account/verification/{id}/:
-    patch:
-      operationId: Update verification.
-      description: 'Verify user. Requires the user to be authenticated and associated with `id`.'
-      parameters:
-      - name: id
-        in: path
-        required: true
-        description: "Verification UUID associated with the user."
-        schema:
-          type: string
-          format: uuid
-          pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
+  /account/verification/confirmation/:
+    post:
+      operationId: Verification confirmation
+      description: 'Verify user. Requires the user to be authenticated and associated with `uuid`.'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Verification'
       responses:
         '200':
           content:
@@ -164,12 +100,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/Verification'
           description: ''
-        '404':
+        '400':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HttpError'
-          description: 'Verification request with the specified `id` does not exist.'
+                $ref: '#/components/schemas/FormError'
+          description: ''
       security:
         - DRFToken: []
       tags:
@@ -179,6 +115,17 @@ paths:
       operationId: 'Send password reset email'
       description:
         "Send password reset email to the user's email address."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
       responses:
         '202':
           description: 'Email is sent to the user or there are no users with the specified email.'
@@ -190,26 +137,17 @@ paths:
           description: 'Bad Request'
       tags:
       - account
-  /account/password_reset/{id}/:
-    patch:
-      operationId: Reset password
+  /account/password_reset/confirmation/:
+    post:
+      operationId: Password reset confirmation
       description: ''
-      parameters:
-      - name: id
-        in: path
-        required: true
-        description: "UUID associated with the user's password request."
-        schema:
-          type: string
-          format: 'uuid'
-          pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PasswordReset'
+              $ref: '#/components/schemas/PasswordResetConfirmation'
       responses:
-        '200':
+        '204':
           description: ''
         '400':
           content:
@@ -217,12 +155,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/FormError'
           description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HttpError'
-          description: 'Password reset request with the specified `id` does not exist.'
       tags:
       - account
   /account/login/:
@@ -260,12 +192,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Feedback'
-#          application/x-www-form-urlencoded:
-#            schema:
-#              $ref: '#/components/schemas/Feedback'
-#          multipart/form-data:
-#            schema:
-#              $ref: '#/components/schemas/Feedback'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Feedback'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Feedback'
       responses:
         '201':
           content:
@@ -293,7 +225,7 @@ paths:
             example: 'processed'
           required: false
           description: 'Matches any document in a specified state.'
-      description: 'Get all documents uploaded by the user.'
+      description: 'Get all documents uploaded by the user. Requires the user to be authenticated and verified.'
       responses:
         '200':
           content:
@@ -303,10 +235,13 @@ paths:
                 items:
                   $ref: '#/components/schemas/Document'
           description: ''
+      security:
+        - 'DRFToken': []
       tags:
         - documents
     post:
       operationId: Create document
+      description: 'Requires the user to be authenticated and verified.'
       requestBody:
         content:
           multipart/form-data:
@@ -325,6 +260,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/FormError'
           description: ''
+      security:
+        - 'DRFToken': []
       tags:
         - documents
   /documents/{id}/:
@@ -338,7 +275,7 @@ paths:
           pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
     get:
       operationId: Get document
-      description: 'Get document uploaded by the user.'
+      description: 'Get document uploaded by the user. Requires the user to be authenticated and verified.'
       responses:
         '200':
           content:
@@ -352,6 +289,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HttpError'
           description: 'Document with the specified `id` does not belong to the authenticated user or does not exist.'
+      security:
+        - 'DRFToken': []
       tags:
         - documents
     patch:
@@ -362,6 +301,7 @@ paths:
         * `processed` - document is successfully processed
         * `failed` - an error occured while processing document
         * `dismissed` - same as `failed`, but acknowledged by user
+        Requires the user to be authenticated and verified.
       requestBody:
         content:
           application/json:
@@ -392,6 +332,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HttpError'
           description: 'Document with the specified `id` does not belong to the authenticated user or does not exist.'
+      security:
+        - DRFToken: []
       tags:
         - documents
   /documents/{id}/heatmap/:
@@ -406,7 +348,8 @@ paths:
     get:
       operationId: Get heatmap
       description: 'Get individual cells comprising document heatmap. Order of cells corresponds to 3x10 matrix in
-      column-major order. Will return empty array if document state is not `processed`.'
+      column-major order. Will return empty array if document state is not `processed`.
+      Requires the user to be authenticated and verified.'
       responses:
         '200':
           content:
@@ -422,6 +365,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HttpError'
           description: 'Document with the specified `id` does not belong to the authenticated user or does not exist.'
+      security:
+        - DRFToken: []
       tags:
         - documents
   /cells/{id}/:
@@ -433,6 +378,7 @@ paths:
           type: integer
     get:
       operationId: Get heatmap cell
+      description: 'Requires the user to be authenticated and verified.'
       responses:
         '200':
           content:
@@ -446,6 +392,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HttpError'
           description: 'Cell with the specified `id` is not associated with the authenticated user or does not exist.'
+      security:
+        - DRFToken: []
       tags:
         - documents
   /cells/{id}/variables/:
@@ -457,6 +405,7 @@ paths:
           type: integer
     get:
       operationId: Get heatmap cell variables
+      description: 'Requires the user to be authenticated and verified.'
       responses:
         '200':
           content:
@@ -472,11 +421,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/HttpError'
           description: 'Cell with the specified `id` is not associated with the authenticated user or does not exist.'
+      security:
+        - DRFToken: []
       tags:
         - documents
   /languages/:
     get:
       operationId: Get languages
+      description: 'Requires the user to be authenticated and verified.'
       parameters:
         - in: query
           name: language
@@ -494,11 +446,14 @@ paths:
                 items:
                   $ref: '#/components/schemas/Language'
           description: ''
+      security:
+        - DRFToken: []
       tags:
         - languages
   /languages/{id}/:
     get:
       operationId: Get language
+      description: 'Requires the user to be authenticated and verified.'
       responses:
         '200':
           content:
@@ -512,11 +467,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/HttpError'
           description: 'Language with the specified `id` does not exist.'
+      security:
+        - DRFToken: []
       tags:
         - languages
   /locations/:
     get:
       operationId: Get locations
+      description: 'Requires the user to be authenticated and verified.'
       parameters:
         - in: query
           name: city
@@ -541,11 +499,14 @@ paths:
                 items:
                   $ref: '#/components/schemas/Location'
           description: ''
+      security:
+        - DRFToken: []
       tags:
         - locations
   /locations/{id}/:
     get:
       operationId: Get location
+      description: 'Requires the user to be authenticated and verified.'
       responses:
         '200':
           content:
@@ -559,6 +520,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/HttpError'
           description: 'Location with the specified `id` does not exist.'
+      security:
+        - DRFToken: []
       tags:
         - locations
 components:
@@ -570,13 +533,13 @@ components:
           type: string
           writeOnly: true
           description: "User's email address."
-          example: 'user@example.org'
+          example: 'dev@mesoc.dev'
         password:
           type: string
           writeOnly: true
           minLength: 8
           maxLength: 128
-          example: 'examplepassword123'
+          example: 'devtest123'
         token:
           type: string
           readOnly: true
@@ -620,13 +583,11 @@ components:
     User:
       type: object
       properties:
-        id:
-          type: integer
-          readOnly: true
         email:
           type: string
           format: email
           maxLength: 254
+          uniqueItems: true
         password:
           type: string
           writeOnly: true
@@ -637,12 +598,21 @@ components:
             from the other user attributes, see Django's
             [included validators](https://docs.djangoproject.com/en/3.1/topics/auth/passwords/#included-validators) and
             `settings.AUTH_PASSWORD_VALIDATORS`."
+          example: 'devtest123'
         verified:
           type: boolean
           readOnly: true
         last_login:
           type: string
           format: date-time
+          readOnly: true
+        documents:
+          type: string
+          format: url
+          readOnly: true
+        url:
+          type: string
+          format: url
           readOnly: true
       required:
       - email
@@ -657,7 +627,7 @@ components:
             type: string
           description: 'HTTP error message.'
           example: ['Not found.']
-    PasswordReset:
+    PasswordResetConfirmation:
       type: object
       properties:
         uuid:
@@ -665,7 +635,7 @@ components:
           writeOnly: true
           format: uuid
           pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
-          description: "UUID associated with the user's password request."
+          description: "UUID associated with the password reset request."
         password:
           type: string
           writeOnly: true
@@ -675,19 +645,33 @@ components:
       required:
         - uuid
         - password
+    PasswordResetRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          writeOnly: true
+          example: 'dev@mesoc.dev'
+      required:
+        - email
     Verification:
       type: object
       properties:
-        id:
+        uuid:
           type: string
           description: 'Verification UUID associated with the user.'
-          readOnly: true
           format: uuid
           pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
+          uniqueItems: true
         verified:
           type: boolean
           readOnly: true
           description: "Verification status."
+        user:
+          type: string
+          format: url
+          readOnly: true
     Language:
       type: object
       properties:

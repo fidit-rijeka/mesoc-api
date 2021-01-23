@@ -1,56 +1,50 @@
 from django.contrib import auth
-from django.core.validators import EmailValidator, ValidationError
 
 from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.mixins import CreateModelMixin
 from rest_framework.response import Response
-from rest_framework.viewsets import ViewSet
+from rest_framework.viewsets import GenericViewSet
 
 from ..models import PasswordReset
-from ..serializers.password import PasswordResetSerializer
+from ..serializers.password import PasswordResetConfirmationSerializer, PasswordResetRequestSerializer
 
 
-class PasswordResetViewSet(ViewSet):
+class PasswordResetViewSet(CreateModelMixin, GenericViewSet):
+    http_method_names = ('post',)
+    serializer_class = PasswordResetRequestSerializer
+    queryset = PasswordReset.objects.all()
+
     def create(self, request, *args, **kwargs):
-        errors = {}
-        email = request.data.get('email')
-
-        try:
-            self._validate_email(email)
-        except ValidationError as e:
-            errors['email'] = e.messages
-            response_status = status.HTTP_400_BAD_REQUEST
-        else:
-            user_model = auth.get_user_model()
-
+        prs = self.get_serializer(data=request.data)
+        if prs.is_valid():
             try:
-                user = user_model.objects.get(email=email)
-
-                pr, created = PasswordReset.objects.get_or_create(user=user)
+                user = auth.get_user_model().objects.filter(email=prs.validated_data['user']['email']).get()
+                pr, created = self.queryset.model.objects.get_or_create(user=user)
                 if not created:
                     pr.regenerate()
                     pr.save()
-            except user_model.DoesNotExist:
+            except auth.get_user_model().DoesNotExist:
                 pass
 
-            response_status = status.HTTP_202_ACCEPTED
-            errors = None
-
-        return Response(status=response_status, data=errors)
-
-    def partial_update(self, request, *args, **kwargs):
-        ps = PasswordResetSerializer(data=request.data)
-        if ps.is_valid():
-            pr = PasswordReset.objects.get(uuid=ps.validated_data['uuid'])
-            pr.user.set_password(ps.validated_data['password'])
-            pr.user.save()
-            pr.delete()
-
-            return Response(status=status.HTTP_200_OK)
+            http_status = status.HTTP_202_ACCEPTED
+            data = None
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST, data=ps.errors)
+            http_status = status.HTTP_400_BAD_REQUEST
+            data = prs.errors
 
-    def _validate_email(self, email):
-        if email is None:
-            raise ValidationError('This field is required.', code='required')
+        return Response(status=http_status, data=data)
 
-        EmailValidator()(email)
+    @action(methods=('post',), detail=False)
+    def confirmation(self, request, pk=None):
+        prs = PasswordResetConfirmationSerializer(data=request.data, context={'request': self.request})
+        if prs.is_valid():
+            pr = prs.save()
+            http_status = status.HTTP_204_NO_CONTENT
+            data = None
+            pr.delete()
+        else:
+            http_status = status.HTTP_400_BAD_REQUEST
+            data = prs.errors
+
+        return Response(status=http_status, data=data)
