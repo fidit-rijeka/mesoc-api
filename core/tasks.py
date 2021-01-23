@@ -43,6 +43,7 @@ def process_document(document):
                     variable = existing_variables[id_]
                 else:
                     variable = Variable.objects.create(id=id_, name=name)
+                    variable.save()
                     existing_variables[id_] = variable
 
                 CellVariable(cell=cell, variable=variable, **v).save()

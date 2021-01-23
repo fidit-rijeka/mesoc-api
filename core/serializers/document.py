@@ -17,7 +17,7 @@ class BaseDocumentSerializer(HyperlinkedModelSerializer):
         return reverse('document-heatmap', args=(obj.pk,), request=self.context['request'])
 
     def get_user(self, obj):
-        return reverse('user-detail', args=(obj.user.pk,), request=self.context['request'])
+        return reverse('account', request=self.context['request'])
 
     def get_language(self, obj):
         return LanguageSerializer(obj.language, context=self.context).data
@@ -90,8 +90,8 @@ class DocumentUploadSerializer(BaseDocumentSerializer):
         write_only=True,
         validators=(
             FileMaxSizeValidator(settings.FILE_MAX_SIZE),
-            FileExtensionValidator(settings.FILE_ALLOWED_MIME_TYPES),
-            FileMimeTypeValidator(settings.FILE_ALLOWED_EXTENSIONS)
+            FileExtensionValidator(settings.FILE_ALLOWED_EXTENSIONS),
+            FileMimeTypeValidator(settings.FILE_ALLOWED_MIME_TYPES)
         )
     )
 
