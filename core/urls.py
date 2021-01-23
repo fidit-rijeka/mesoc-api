@@ -19,11 +19,15 @@ router.register('account/password_reset', PasswordResetViewSet, basename='passwo
 router.register('cells', CellViewSet)
 router.register('locations', LocationViewSet)
 router.register('languages', LanguageViewSet)
-router.register('users', UserViewSet)
 router.register('documents', DocumentViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
     path('account/login/', LoginView.as_view()),
+    path(
+        'account/',
+        UserViewSet.as_view({'get': 'retrieve', 'post': 'create', 'patch': 'partial_update'}),
+        name='account',
+    ),
     path('feedback/', FeedbackView.as_view())
 ]

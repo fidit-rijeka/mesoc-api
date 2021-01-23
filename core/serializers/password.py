@@ -1,29 +1,46 @@
-import datetime
-
-from django.conf import settings
 from django.contrib import auth
 from django.core.exceptions import ValidationError
 from django.utils.timezone import now
 
-from rest_framework.serializers import CharField, EmailField, ModelSerializer, Serializer, UUIDField
+from rest_framework.serializers import (
+    CharField, EmailField, HyperlinkedModelSerializer, Serializer, SerializerMethodField, UUIDField
+)
 
 from ..models import PasswordReset
 
 
-class PasswordResetSerializer(Serializer):
-    uuid = UUIDField(write_only=True, required=True)
+class PasswordResetRequestSerializer(Serializer):
+    email = EmailField(source='user.email', write_only=True)
+
+    class Meta:
+        model = PasswordReset
+        fields = ('email',)
+
+
+class PasswordResetConfirmationSerializer(HyperlinkedModelSerializer):
+    uuid = UUIDField(required=True, write_only=True)
     password = CharField(write_only=True, max_length=128, required=True)
 
-    def validate_uuid(self, uuid):
-        if not PasswordReset.objects.filter(uuid=uuid, expires_at__lte=now()).exists():
-            raise ValidationError('Invalid UUID.', code='invalid')
+    class Meta:
+        model = PasswordReset
+        fields = ('uuid', 'password', 'user')
+        read_only_fields = ('user',)
 
-        return uuid
+    def validate_password(self, password):
+        auth.password_validation.validate_password(password=password, user=self.context['request'].user)
+        return password
 
-    def validate(self, attrs):
-        validated = super().validate(attrs)
+    def validate(self, data):
+        data = super().validate(data)
+        uuid = data['uuid']
+        if not PasswordReset.objects.filter(uuid=uuid, expires_at__gt=now()).exists():
+            raise ValidationError({'uuid': ['Specified UUID is not valid or has expired.']})
 
-        pr = PasswordReset.objects.get(uuid=validated['uuid'])
-        auth.password_validation.validate_password(password=validated['password'], user=pr.user)
+        return data
 
-        return validated
+    def save(self):
+        pr = PasswordReset.objects.filter(uuid=self.validated_data['uuid']).select_related('user').get()
+        pr.user.set_password(self.validated_data['password'])
+        pr.user.save()
+
+        return pr

@@ -1,5 +1,8 @@
+import uuid
+
+
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
-from django.db import models
+from django.db.models import BooleanField, EmailField, UUIDField
 
 
 class UserManager(BaseUserManager):
@@ -18,6 +21,7 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser):
     objects = UserManager()
-    email = models.EmailField(unique=True)
-    verified = models.BooleanField(blank=True, default=False)
+    id = UUIDField(default=uuid.uuid4, primary_key=True)
+    email = EmailField(unique=True)
+    verified = BooleanField(blank=True, default=False)
     USERNAME_FIELD = 'email'

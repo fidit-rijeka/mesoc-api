@@ -2,17 +2,18 @@ from django.contrib import auth
 from django.core import exceptions as django_exceptions
 
 from rest_framework.reverse import reverse
-from rest_framework.serializers import CharField, ModelSerializer, SerializerMethodField, ValidationError
+from rest_framework.serializers import CharField, HyperlinkedModelSerializer, SerializerMethodField, ValidationError
 
 
-class UserSerializer(ModelSerializer):
+class UserSerializer(HyperlinkedModelSerializer):
     password = CharField(max_length=128, required=True, write_only=True)
-    documents = SerializerMethodField(read_only=True)
+    documents = SerializerMethodField()
+    url = SerializerMethodField()
 
     class Meta:
         model = auth.get_user_model()
-        fields = ('id', 'email', 'password', 'verified', 'last_login', 'documents')
-        read_only_fields = ('id', 'last_login', 'verified', 'documents')
+        fields = ('email', 'password', 'verified', 'last_login', 'documents', 'url')
+        read_only_fields = ('verified', 'last_login',)
 
     def validate(self, attrs):
         user = self.Meta.model(**attrs)
@@ -30,11 +31,18 @@ class UserSerializer(ModelSerializer):
         return self.Meta.model.objects.create_user(**validated_data)
 
     def update(self, instance, validated_data):
-        password = validated_data.pop('password')
+        password = validated_data.pop('password', None)
         if password:
-            instance.set_password(validated_data['password'])
+            instance.set_password(password)
 
-        return self.Meta.model.objects.create_user(validated_data['email'], validated_data['password'])
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+
+        instance.save()
+        return instance
 
     def get_documents(self, obj):
-        return reverse('user-documents', args=(obj.pk,), request=self.context['request'])
+        return reverse('document-list', request=self.context['request'])
+
+    def get_url(self, obj):
+        return reverse('account', args=(), request=self.context['request'])
