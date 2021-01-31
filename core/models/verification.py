@@ -1,20 +1,25 @@
+import datetime
 import uuid
 
 from django.conf import settings
 from django.contrib import auth
-from django.db import models
+from django.db.models import CASCADE, DateTimeField, Model, OneToOneField, UUIDField
 from django.template.loader import render_to_string
+from django.utils.timezone import now
 
 from .. import tasks
 
 
-class Verification(models.Model):
-    uuid = models.UUIDField(unique=True, default=uuid.uuid4)
-    user = models.OneToOneField(auth.get_user_model(), models.CASCADE)
+class Verification(Model):
+    uuid = UUIDField(unique=True, default=uuid.uuid4)
+    requested_at = DateTimeField(auto_now_add=True)
+    expires_at = DateTimeField(default=now() + datetime.timedelta(days=settings.PASSWORD_RESET_MAX_AGE))
+    user = OneToOneField(auth.get_user_model(), CASCADE)
 
-    def regenerate_uuid(self):
+    def regenerate(self):
         self.uuid = uuid.uuid4()
-        return self.uuid
+        self.requested_at = now()
+        self.expires_at = self.requested_at + datetime.timedelta(days=settings.PASSWORD_RESET_MAX_AGE)
 
     def send_by_email(self):
         base_url = settings.VERIFICATION_BASE_URL
