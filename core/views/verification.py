@@ -25,7 +25,7 @@ class VerificationViewSet(CreateModelMixin, GenericViewSet):
         else:
             try:
                 v = self.get_queryset().get()
-                v.regenerate_uuid()
+                v.regenerate()
                 v.save()
             except Verification.DoesNotExist:
                 self.queryset.model.objects.create()
@@ -39,9 +39,7 @@ class VerificationViewSet(CreateModelMixin, GenericViewSet):
     def confirmation(self, request, *args, **kwargs):
         vs = self.get_serializer(data=request.data)
         if vs.is_valid():
-            self.request.user.verified = True
-            self.request.user.save()
-
+            vs.save()
             data = None
             http_status = status.HTTP_204_NO_CONTENT
 
