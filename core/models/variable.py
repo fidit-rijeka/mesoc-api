@@ -4,4 +4,4 @@ from django.db.models import CharField, IntegerField, Model
 
 class Variable(Model):
     id = IntegerField(primary_key=True, validators=(MinValueValidator(0),))
-    name = CharField(max_length=30, validators=(MinLengthValidator(1),))
+    name = CharField(max_length=60, validators=(MinLengthValidator(1),))
