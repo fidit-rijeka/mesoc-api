@@ -78,7 +78,7 @@ class Migration(migrations.Migration):
             name='Variable',
             fields=[
                 ('id', models.IntegerField(primary_key=True, serialize=False, validators=[django.core.validators.MinValueValidator(0)])),
-                ('name', models.CharField(max_length=30, validators=[django.core.validators.MinLengthValidator(1)])),
+                ('name', models.CharField(max_length=60, validators=[django.core.validators.MinLengthValidator(1)])),
             ],
         ),
         migrations.CreateModel(
