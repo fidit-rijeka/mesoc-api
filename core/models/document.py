@@ -26,8 +26,8 @@ class Document(Model):
 
     id = UUIDField(default=uuid.uuid4, primary_key=True)
     file = FileField(upload_to='documents/',)
-    file_title = CharField(max_length=100, validators=(MinLengthValidator(1),),)
-    document_title = CharField(blank=True, default='', max_length=100, validators=(MinLengthValidator(1),))
+    file_title = CharField(max_length=200, validators=(MinLengthValidator(1),),)
+    document_title = CharField(blank=True, default='', max_length=200, validators=(MinLengthValidator(1),))
     uploaded_at = DateTimeField(auto_now_add=True, blank=True)
     state = IntegerField(choices=STATES.items(), blank=True, default=PROCESSING)
     cities = ManyToManyField('core.City', through='core.DocumentCity', related_name='cities')
