@@ -60,8 +60,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.UUIDField(default=uuid.uuid4, primary_key=True, serialize=False)),
                 ('file', models.FileField(upload_to='documents/')),
-                ('file_title', models.CharField(max_length=100, validators=[django.core.validators.MinLengthValidator(1)])),
-                ('document_title', models.CharField(blank=True, default='', max_length=100, validators=[django.core.validators.MinLengthValidator(1)])),
+                ('file_title', models.CharField(max_length=200, validators=[django.core.validators.MinLengthValidator(1)])),
+                ('document_title', models.CharField(blank=True, default='', max_length=200, validators=[django.core.validators.MinLengthValidator(1)])),
                 ('uploaded_at', models.DateTimeField(auto_now_add=True)),
                 ('state', models.IntegerField(blank=True, choices=[(0, 'processing'), (1, 'failed'), (2, 'processed'), (3, 'dismissed')], default=0)),
             ],
