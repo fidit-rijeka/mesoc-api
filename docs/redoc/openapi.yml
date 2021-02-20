@@ -4,6 +4,22 @@ info:
   version: '0.3'
 paths:
   /account/:
+    get:
+      operationId: Get account
+      description: "Get user's account details. Requires the user to be authenticated."
+      parameters: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+      security:
+        - DRFToken: []
+      tags:
+        - account
+
     post:
       operationId: Create user
       description: 'Register user with the specified email address and password. On successful register, a verification

@@ -15,6 +15,7 @@ class UserViewSet(CreateModelMixin, UpdateModelMixin, RetrieveModelMixin, Generi
     permission_classes = (IsAuthenticated, IsVerified)
     action_permission_classes = {
         'create': (AllowAny,),
+        'retrieve': (IsAuthenticated,)
     }
 
     def get_object(self):
