@@ -224,7 +224,8 @@ paths:
               - dismissed
             example: 'processed'
           required: false
-          description: 'Matches any document in a specified state.'
+          description: 'Matches any document in a specified state. Value `active` can be used to retrieve all documents
+          in state `processing`, `processed` or `failed`.'
       description: 'Get all documents uploaded by the user. Requires the user to be authenticated and verified.'
       responses:
         '200':
@@ -717,7 +718,7 @@ components:
         state:
           type: string
           example: 'dismissed'
-          description: 'Document state, possible values: `processing`, `failed`, `processed`, `dismissed`.'
+          description: 'Document state, possible values: `processing`, `failed`, `processed` or `dismissed`.'
     Document:
       type: object
       properties:
@@ -733,7 +734,7 @@ components:
         state:
           type: string
           example: 'processing'
-          description: 'Document state, possible values: `processing`, `failed`, `processed`, `dismissed`.'
+          description: 'Document state, possible values: `processing`, `failed`, `processed` or `dismissed`.'
         language:
           $ref: '#/components/schemas/Language'
         location:

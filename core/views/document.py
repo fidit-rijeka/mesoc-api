@@ -24,12 +24,14 @@ class DocumentViewSet(ModelViewSet):
         qs = self.queryset.filter(user=self.request.user)
 
         state = self.request.query_params.get('state', '')
-        if state in qs.model.STATES.values():
-            state = getattr(qs.model, state.upper())
-        else:
-            state = ''
+        state_upper = state.upper()
+        if state_upper == 'ACTIVE':
+            active_states = [s for s in qs.model.STATES.keys() if s != qs.model.DISMISSED]
+            qs = qs.filter(state__in=active_states)
+        elif state in qs.model.STATES.values():
+            qs = qs.filter(state=getattr(qs.model, state_upper))
 
-        return qs.filter(state=state) if state else qs
+        return qs
 
     @action(methods=('get',), detail=True)
     def heatmap(self, request, pk=None,):
