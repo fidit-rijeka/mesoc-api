@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
-    'core.apps.CoreConfig'
+    'core.apps.CoreConfig',
+    'anymail'
 ]
 
 MIDDLEWARE = [
@@ -129,10 +130,20 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Email
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# EMAIL_BACKEND = 'anymail.backends.mailgun.EmailBackend'
+
 EMAIL_HOST_USER = 'noreply'
 EMAIL_HOST_PASSWORD = 'test'
-DEFAULT_FROM_EMAIL = 'noreply@mesoc.dev'
+DEFAULT_FROM_EMAIL = 'noreply@mail.mesoc.dev'
 FEEDBACK_EMAIL = 'info@mesoc-project.eu'
+
+# ANYMAIL = {
+#     'IGNORE_RECIPIENT_STATUS': True,
+#
+#     'MAILGUN_API_KEY': '<api_key>',
+#     'MAILGUN_API_URL': 'https://api.eu.mailgun.net/v3',
+# }
 
 # Verification and password reset
 
@@ -160,7 +171,7 @@ REST_FRAMEWORK = {
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-# Other
+# File upload
 
 FILE_MAX_SIZE = 31457280  # 30 MiB
 FILE_ALLOWED_MIME_TYPES = ('text/plain', 'application/pdf')
