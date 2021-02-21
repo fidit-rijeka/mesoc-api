@@ -181,13 +181,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthToken'
+              $ref: '#/components/schemas/Login'
       responses:
-        '201':
+        '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthToken'
+                $ref: '#/components/schemas/Login'
           description: ''
         '400':
           content:
@@ -543,7 +543,7 @@ paths:
         - locations
 components:
   schemas:
-    AuthToken:
+    Login:
       type: object
       properties:
         username:
@@ -561,6 +561,10 @@ components:
           type: string
           readOnly: true
           example: '1ba542f38c8353f4f584035cfd97f617e881b538'
+        verified:
+          type: boolean
+          readOnly: true
+          example: 'false'
       required:
       - username
       - password
