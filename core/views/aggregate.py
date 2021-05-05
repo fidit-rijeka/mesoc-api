@@ -1,4 +1,5 @@
 import collections
+import decimal
 
 from django.db.models import Avg, Count
 
@@ -57,12 +58,12 @@ class AggregateHeatmapView(APIView):
         aggregate = RepositoryCell.objects.select_related('city').select_related('document')
 
         try:
-            latitude = float(request.query_params.get('latitude', ''))
+            latitude = decimal.Decimal(request.query_params.get('latitude', ''))
         except ValueError:
             latitude = None
 
         try:
-            longitude = float(request.query_params.get('longitude', ''))
+            longitude = decimal.Decimal(request.query_params.get('longitude', ''))
         except ValueError:
             longitude = None
 
