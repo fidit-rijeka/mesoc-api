@@ -2,6 +2,7 @@ from django.urls import include, path
 
 from rest_framework.routers import SimpleRouter
 
+from .views.aggregate import AggregateHeatmapView, AggregateLocationView, AggregateCellSimilarityView
 from .views.cell import CellViewSet
 from .views.location import LocationViewSet
 from .views.document import DocumentViewSet
@@ -29,5 +30,8 @@ urlpatterns = [
         UserViewSet.as_view({'get': 'retrieve', 'post': 'create', 'patch': 'partial_update'}),
         name='account',
     ),
+    path('aggregates/location/', AggregateLocationView().as_view(), name='aggregate-location'),
+    path('aggregates/heatmap/', AggregateHeatmapView().as_view(), name='aggregate-heatmap'),
+    path('aggregates/similar/cell/', AggregateCellSimilarityView().as_view(), name='aggregate-similar'),
     path('feedback/', FeedbackView.as_view())
 ]

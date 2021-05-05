@@ -146,9 +146,11 @@ FEEDBACK_EMAIL = 'info@mesoc-project.eu'
 # }
 
 # Verification and password reset
-
-VERIFICATION_BASE_URL = 'http://localhost:8000/account/verification'
-PASSWORD_RESET_BASE_URL = 'http://localhost:8000/account/password_reset'
+CORE_API_BASE_URL = 'http://localhost:8000'
+CORE_VERIFICATION_BASE_URL = 'https://app.mesoc.dev/verification/verification'
+CORE_PASSWORD_RESET_BASE_URL = 'https://app.mesoc.dev/verification/password_reset'
+CORE_PROCESSING_SUCCESS_URL = 'https://app.mesoc.dev/my-documents'
+CORE_PROCESSING_FAIL_URL = 'https://app.mesoc.dev/upload-document'
 
 VERIFICATION_MAX_AGE = 14
 PASSWORD_RESET_MAX_AGE = 14
@@ -176,3 +178,25 @@ CORS_ALLOW_ALL_ORIGINS = True
 FILE_MAX_SIZE = 31457280  # 30 MiB
 FILE_ALLOWED_MIME_TYPES = ('text/plain', 'application/pdf')
 FILE_ALLOWED_EXTENSIONS = ('txt', 'pdf')
+
+# NLP
+
+CORE_NUM_KEYWORDS = 30
+CORE_MIN_SENTENCE_LENGTH = 15
+
+CORE_YAKE_CANDIDATE_NGRAM = 4
+CORE_YAKE_CANDIDATE_WINDOW_SIZE = 18
+CORE_YAKE_THRESHOLD = 0.95
+
+CORE_CRP_ROW_MODEL = BASE_DIR / 'ml_models' / 'rf_row.pickle'
+CORE_CRP_COLUMN_MODEL = BASE_DIR / 'ml_models' / 'rf_column.pickle'
+CORE_CRP_TFIDF_VECTORIZER = BASE_DIR / 'ml_models' / 'tfidf_vectorizer.pickle'
+
+CORE_CRP_COLUMN_THRESHOLD = 0.1
+CORE_CRP_ROW_THRESHOLD = 0.1
+
+# Repository settings
+
+CORE_CELL_SIMILARITY_THRESHOLD = 0.0
+
+REPOSITORY_DOCUMENT_PREVIEW_URL = 'http://mesoc-doc.uniri.hr'

@@ -7,7 +7,6 @@ class Cell(Model):
         unique_together = ('document', 'order')
 
     classification = FloatField(validators=(MaxValueValidator(1.0), MinValueValidator(0.0)))
-    num_keywords = IntegerField(validators=(MinValueValidator(1),))
     order = IntegerField(validators=(MinValueValidator(0), MaxValueValidator(29)))
     document = ForeignKey('core.Document', CASCADE, 'cells')
     variables = ManyToManyField('core.Variable',  through='core.CellVariable',)

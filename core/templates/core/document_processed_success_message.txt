@@ -1,0 +1,8 @@
+Dear user,
+
+your document titled "{{ document_title }}" has finished processing, you can view the results by visiting the following page:
+
+{{ my_documents_url }}
+
+Kind regards,
+MESOC Team

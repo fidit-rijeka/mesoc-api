@@ -1,8 +1,11 @@
+import celery
+
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.status import HTTP_200_OK
 from rest_framework.viewsets import ModelViewSet
+
 
 from .. import tasks
 from ..models import Document
@@ -49,6 +52,13 @@ class DocumentViewSet(ModelViewSet):
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
 
-        tasks.process_document.delay(response.data)
+        document_id = response.data['url'].split('/')[-2]
+        celery.chain(
+            tasks.convert_to_pdf.s(document_id),
+            tasks.extract_keywords.s(),
+            tasks.classify_document.s(),
+            tasks.commit_results.s(document_id),
+            tasks.mail_results.si(document_id)
+        ).apply_async(link_error=tasks.fail_document.si(document_id))
 
         return response

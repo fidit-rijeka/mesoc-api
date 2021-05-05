@@ -22,7 +22,7 @@ class PasswordReset(Model):
         self.expires_at = self.requested_at + datetime.timedelta(days=settings.PASSWORD_RESET_MAX_AGE)
 
     def send_by_email(self):
-        base_url = settings.PASSWORD_RESET_BASE_URL
+        base_url = settings.CORE_PASSWORD_RESET_BASE_URL
         password_url = '{}/{}/'.format(base_url, self.uuid)
 
         tasks.send_mail.delay(
