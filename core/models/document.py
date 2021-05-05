@@ -43,3 +43,8 @@ class DocumentCity(Model):
     document = ForeignKey('core.Document', on_delete=CASCADE)
     city = ForeignKey('core.City', on_delete=CASCADE)
     primary = BooleanField(default=True)
+
+
+class DocumentKeyword(Model):
+    document = ForeignKey('core.Document', on_delete=CASCADE, related_name='keywords')
+    value = CharField(max_length=100)

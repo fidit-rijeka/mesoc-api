@@ -6,10 +6,14 @@ from ..models import Cell, CellVariable
 
 class CellSerializer(HyperlinkedModelSerializer):
     variables = SerializerMethodField()
+    similar_documents = SerializerMethodField()
 
     class Meta:
         model = Cell
-        fields = ('order', 'classification', 'num_keywords', 'variables', 'document', 'url')
+        fields = ('order', 'classification', 'variables', 'similar_documents', 'document', 'url')
+
+    def get_similar_documents(self, obj):
+        return reverse('cell-similar', args=(obj.pk,), request=self.context['request'])
 
     def get_variables(self, obj):
         return reverse('cell-variables', args=(obj.pk,), request=self.context['request'])

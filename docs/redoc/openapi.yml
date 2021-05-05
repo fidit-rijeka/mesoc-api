@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: 'MESOC REST API'
-  version: '0.3'
+  version: '0.7'
 paths:
   /account/:
     get:
@@ -197,6 +197,148 @@ paths:
           description: ''
       tags:
       - account
+  /aggregates/location/:
+    get:
+      operationId: Get location aggregate
+      description: 'Get number of repository documents grouped by location.'
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum:
+              - scientific
+              - pilot
+            example: 'scientific'
+          required: false
+          description: "Filter aggregate by document type."
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LocationAggregate'
+          description: ''
+      tags:
+        - aggregates
+  /aggregates/heatmap/:
+    get:
+      operationId: Get heatmap aggregate
+      description: 'Get average classification by cell.'
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum:
+              - scientific
+              - pilot
+            example: 'scientific'
+          required: false
+          description: "Filter aggregate by document type."
+        - in: query
+          name: latitude
+          schema:
+            type: number
+            example: 52.520008
+          required: false
+          description: "Filter aggregate by latitude."
+        - in: query
+          name: longitude
+          schema:
+            type: number
+            example: 13.404954
+          required: false
+          description: "Filter aggregate by longitude."
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HeatmapAggregate'
+          description: ''
+      tags:
+        - aggregates
+  /aggregates/similar/cell/:
+    get:
+      operationId: Get cell similar documents of an aggregate
+      description: 'Get cell similar documents of a heatmap aggregate.'
+      parameters:
+        - in: query
+          name: latitude
+          schema:
+            type: number
+            example: 52.520008
+          required: true
+          description: "Filter aggregate by latitude."
+        - in: query
+          name: longitude
+          schema:
+            type: number
+            example: 13.404954
+          required: true
+          description: "Filter aggregate by longitude."
+        - in: query
+          name: cell
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 29
+            example: 9
+          required: true
+          description: "Filter aggregate by cell. This parameters corresponds to the index of a 10x3 matrix in column-major order with the top left element having index of 0."
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CellSimilarity'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FormError'
+          description: ''
+      tags:
+        - aggregates
+  /cell/{id}/:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: 'uuid'
+          pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
+    get:
+      operationId: Get cell
+      description: 'Get specific heatmap cell. Requires the user to be authenticated and verified.'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cell'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+          description: 'Document with the specified `id` does not belong to the authenticated user or does not exist.'
+      security:
+        - 'DRFToken': []
+      tags:
+        - cell
   /feedback/:
     post:
       operationId: Create feedback
@@ -442,6 +584,33 @@ paths:
         - DRFToken: []
       tags:
         - documents
+  /cell/{id}/similar:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      operationId: Get cell similar documents
+      description: 'Get cell similar documents of a specific document. Requires the user to be authenticated and verified.'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CellSimilarity'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+          description: 'Cell with the specified `id` is not associated with the authenticated user or does not exist.'
+      security:
+        - DRFToken: []
+      tags:
+        - cell
   /languages/:
     get:
       operationId: Get languages
@@ -543,6 +712,45 @@ paths:
         - locations
 components:
   schemas:
+    Cell:
+      type: object
+      properties:
+        order:
+          type: integer
+          example: 5
+        classification:
+          type: number
+          example: 0.7
+        variables:
+          type: string
+          format: url
+          example: 'https://api.mesoc.dev/cells/4/variables/'
+        similar_documents:
+          type: string
+          format: url
+          example: 'https://api.mesoc.dev/cells/4/similar/'
+        document:
+          type: string
+          format: url
+          example: 'https://api.mesoc.dev/documents/bec0f39a-503d-413e-968f-a289f3420621/'
+        url:
+          type: string
+          format: url
+          example: 'http://api.mesoc.dev/cells/4/'
+    CellSimilarity:
+      type: object
+      properties:
+        document_title:
+          type: string
+          description: "Document's title in the repository."
+        similarity:
+          type: number
+          example: 0.45
+          description: 'Jaccard similarity between documents.'
+        preview_url:
+          type: string
+          format: url
+          description: "Repository view of the document."
     Login:
       type: object
       properties:
@@ -794,30 +1002,6 @@ components:
           format: file
           description: 'Text or PDF file to upload.'
           example: '/home/mulder/proof.pdf'
-    Cell:
-      type: object
-      properties:
-        order:
-          type: integer
-          example: 5
-        classification:
-          type: number
-          example: 0.7
-        num_keywords:
-          type: integer
-          example: 1
-        variables:
-          type: string
-          format: url
-          example: 'https://api.mesoc.dev/cells/4/variables/'
-        document:
-          type: string
-          format: url
-          example: 'https://api.mesoc.dev/documents/bec0f39a-503d-413e-968f-a289f3420621/'
-        url:
-          type: string
-          format: url
-          example: 'http://api.mesoc.dev/cells/4/'
     Variable:
       type: object
       properties:
@@ -838,6 +1022,49 @@ components:
           type: string
           format: url
           example: 'http://api.mesoc.dev/cells/4/'
+    LocationAggregate:
+      type: object
+      properties:
+        city:
+          type: string
+          maxLength: 58
+          minLength: 1
+          example: 'Rijeka'
+        longitude:
+          type: number
+          example: 14.4091700000000000
+        latitude:
+          type: number
+          example: 45.3430600000000000
+        country:
+          type: string
+          maxLength: 56
+          example: 'Croatia'
+        url:
+          type: string
+          format: url
+          example: 'http://api.mesoc.dev/locations/4/'
+        num_scientific:
+          type: integer
+          description: 'Number of scientific studies.'
+          example: 12
+        num_pilot:
+          type: integer
+          description: 'Number of pilot studies.'
+          example: 12
+        heatmap:
+          type: string
+          format: url
+          example: 'http://api.mesoc.dev/aggregates/heatmap/?latitude=45.3430600000000000&longitude=14.4091700000000000'
+    HeatmapAggregate:
+      type: object
+      properties:
+        order:
+          type: integer
+          example: 5
+        classification:
+          type: number
+          example: 0.7
   securitySchemes:
     DRFToken:
       type: http

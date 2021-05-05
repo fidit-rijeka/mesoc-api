@@ -1,0 +1,8 @@
+Dear user,
+
+your document titled "{{ document_title }}" has finished processing unsucessfully, you can try submitting a different document by visiting the following page:
+
+{{ upload_url }}
+
+Kind regards,
+MESOC Team

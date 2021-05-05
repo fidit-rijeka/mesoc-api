@@ -1,52 +1,136 @@
-import json
-import random
+import logging
+import pickle
 
+import numpy
+
+from celery import shared_task, Task
+from django.conf import settings
 from django.core import mail
-from celery import shared_task
+from django.template.loader import render_to_string
 
-from .models import Cell, CellVariable, Document, Variable
+from core import nlp
+from .models import Cell, Document, DocumentKeyword
+
+logger = logging.getLogger(__name__)
+
+
+class LoggedTask(Task):
+    def on_failure(self, exc, task_id, args, kwargs, einfo):
+        logger.error('An error occured while executing task {}'.format(task_id))
+        logger.error(exc)
 
 
 @shared_task
+def fail_document(document_id):
+    document = Document.objects.filter(id=document_id).get()
+    document.state = document.FAILED
+    document.save()
+
+    send_mail(
+        render_to_string('core/document_processed_subject.txt'),
+        render_to_string(
+            'core/document_processed_fail_message.txt',
+            context={'document_title': document.file_title, 'upload_url': settings.CORE_PROCESSING_FAIL_URL}
+        ),
+        None,
+        (document.user.email,),
+    )
+
+
+@shared_task(base=LoggedTask)
 def send_mail(subject, message, from_, to):
     mail.send_mail(subject, message, from_, to)
 
 
-@shared_task
-def process_document(document):
-    id_ = document['url'].split('/')[-2]
-    instance = Document.objects.filter(id=id_).get()
-    test_results = [
-        'core/example_results/0_document.json',
-        'core/example_results/1_document.json',
-        'core/example_results/2_document.json',
-        'core/example_results/3_document.json',
-        'core/example_results/4_document.json'
-    ]
-    result = random.choice(test_results)
+@shared_task(base=LoggedTask)
+def convert_to_pdf(document_id):
+    document = Document.objects.filter(id=document_id).get()
 
-    existing_variables = dict((v.pk, v) for v in Variable.objects.all())
+    entities_processor = nlp.processing.CompoundEntitiesProcessor()
+    stops_processor = nlp.processing.StopsProcessor()
+    min_length_processor = nlp.processing.MinSentenceLengthProcessor(settings.CORE_MIN_SENTENCE_LENGTH)
+    pdf_converter = nlp.pdf_conversion.FitzPDFConverter(
+        post_processors=(entities_processor, stops_processor, min_length_processor)
+    )
 
-    # TODO: actually process the document
-    with open(result) as f:
-        result = json.load(f)
+    text = pdf_converter.convert_to_text(document.file.path)
 
-        instance.document_title = result['title']
+    return text
 
-        for c in result['cells']:
-            variables = c.pop('variables')
-            cell = Cell(document=instance, **c)
-            cell.save()
-            for v in variables:
-                id_, name = v.pop('id'), v.pop('name')
-                if id_ in existing_variables:
-                    variable = existing_variables[id_]
-                else:
-                    variable = Variable.objects.create(id=id_, name=name)
-                    variable.save()
-                    existing_variables[id_] = variable
 
-                CellVariable(cell=cell, variable=variable, **v).save()
+@shared_task(base=LoggedTask)
+def extract_keywords(text):
+    keyword_processor = nlp.processing.KeyphraseToKeywordProcessor()
+    extractor = nlp.keyword_extraction.YAKEKeywordExtractor(
+        settings.CORE_NUM_KEYWORDS,
+        settings.CORE_YAKE_CANDIDATE_NGRAM,
+        settings.CORE_YAKE_CANDIDATE_WINDOW_SIZE,
+        settings.CORE_YAKE_THRESHOLD,
+        post_processors=(keyword_processor,)
+    )
 
-    instance.state = instance.PROCESSED
-    instance.save()
+    keywords = extractor.extract_keywords(text)
+
+    return keywords
+
+
+@shared_task(base=LoggedTask)
+def classify_document(keywords):
+    with open(settings.CORE_CRP_ROW_MODEL, 'rb') as f:
+        row_model = pickle.load(f)
+
+    with open(settings.CORE_CRP_COLUMN_MODEL, 'rb') as f:
+        column_model = pickle.load(f)
+
+    with open(settings.CORE_CRP_TFIDF_VECTORIZER, 'rb') as f:
+        tfidf_vectorizer = pickle.load(f)
+
+    classifier = nlp.classification.ColumnRowProbabilityClassifier(
+        row_model,
+        column_model,
+        tfidf_vectorizer,
+        settings.CORE_CRP_ROW_THRESHOLD,
+        settings.CORE_CRP_COLUMN_THRESHOLD
+    )
+
+    return keywords, classifier.classify_keywords(keywords)
+
+
+@shared_task(base=LoggedTask)
+def commit_results(results, document_id):
+    keywords = results[0]
+    heatmap = numpy.array(results[1], order='F')
+
+    document = Document.objects.filter(id=document_id).get()
+
+    cells = []
+
+    nonzero = heatmap.nonzero()
+    for index in nonzero[0]:
+        cell = Cell(classification=heatmap[index], order=index, document=document)
+        cells.append(cell)
+
+    document_keywords = []
+    for keyword in set(keywords):
+        dk = DocumentKeyword(value=keyword, document=document)
+        document_keywords.append(dk)
+
+    Cell.objects.bulk_create(cells)
+    DocumentKeyword.objects.bulk_create(document_keywords)
+    document.state = document.PROCESSED
+    document.save()
+
+
+@shared_task(base=LoggedTask)
+def mail_results(document_id):
+    document = Document.objects.filter(id=document_id).select_related('user').get()
+
+    send_mail(
+        render_to_string('core/document_processed_subject.txt'),
+        render_to_string(
+            'core/document_processed_success_message.txt',
+            context={'document_title': document.file_title, 'my_documents_url': settings.CORE_PROCESSING_SUCCESS_URL}
+        ),
+        None,
+        (document.user.email,),
+    )
