@@ -136,7 +136,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST_USER = 'noreply'
 EMAIL_HOST_PASSWORD = 'test'
 DEFAULT_FROM_EMAIL = 'noreply@mail.mesoc.dev'
-FEEDBACK_EMAIL = 'info@mesoc-project.eu'
+CORE_FEEDBACK_EMAIL = 'info@mesoc-project.eu'
 
 # ANYMAIL = {
 #     'IGNORE_RECIPIENT_STATUS': True,
@@ -152,8 +152,8 @@ CORE_PASSWORD_RESET_BASE_URL = 'https://app.mesoc.dev/verification/password_rese
 CORE_PROCESSING_SUCCESS_URL = 'https://app.mesoc.dev/my-documents'
 CORE_PROCESSING_FAIL_URL = 'https://app.mesoc.dev/upload-document'
 
-VERIFICATION_MAX_AGE = 14
-PASSWORD_RESET_MAX_AGE = 14
+CORE_VERIFICATION_MAX_AGE = 14
+CORE_PASSWORD_RESET_MAX_AGE = 14
 
 # Celery
 
@@ -175,9 +175,9 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 # File upload
 
-FILE_MAX_SIZE = 31457280  # 30 MiB
-FILE_ALLOWED_MIME_TYPES = ('text/plain', 'application/pdf')
-FILE_ALLOWED_EXTENSIONS = ('txt', 'pdf')
+CORE_FILE_MAX_SIZE = 31457280  # 30 MiB
+CORE_ALLOWED_MIME_TYPES = ('text/plain', 'application/pdf')
+CORE_ALLOWED_EXTENSIONS = ('txt', 'pdf')
 
 # NLP
 
@@ -199,4 +199,4 @@ CORE_CRP_ROW_THRESHOLD = 0.1
 
 CORE_CELL_SIMILARITY_THRESHOLD = 0.0
 
-REPOSITORY_DOCUMENT_PREVIEW_URL = 'http://mesoc-doc.uniri.hr'
+CORE_REPOSITORY_PREVIEW_URL = 'http://mesoc-doc.uniri.hr'

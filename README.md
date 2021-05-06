@@ -37,14 +37,14 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST_USER = 'noreply'
 EMAIL_HOST_PASSWORD = 'test'
 DEFAULT_FROM_EMAIL = 'noreply@mesoc.dev'
-FEEDBACK_EMAIL = 'info@mesoc-project.eu'
+CORE_FEEDBACK_EMAIL = 'info@mesoc-project.eu'
 
 # verification, age given in days
 VERIFICATION_BASE_URL = 'http://localhost:8000/account/verification'
 PASSWORD_RESET_BASE_URL = 'http://localhost:8000/account/password_reset'
 
-VERIFICATION_MAX_AGE = 14
-PASSWORD_RESET_MAX_AGE = 14
+CORE_VERIFICATION_MAX_AGE = 14
+CORE_PASSWORD_RESET_MAX_AGE = 14
 
 # celery
 CELERY_BROKER_URL = 'redis://localhost:6379'
@@ -59,8 +59,8 @@ CORS_ALLOW_ALL_ORIGINS = True
 # ]
 
 # Other
-FILE_MAX_SIZE = 31457280  # 30 MiB
-FILE_ALLOWED_MIME_TYPES = ('text/plain', 'application/pdf')
-FILE_ALLOWED_EXTENSIONS = ('txt', 'pdf')
+CORE_FILE_MAX_SIZE = 31457280  # 30 MiB
+CORE_ALLOWED_MIME_TYPES = ('text/plain', 'application/pdf')
+CORE_ALLOWED_EXTENSIONS = ('txt', 'pdf')
 
 ```

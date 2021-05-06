@@ -19,7 +19,7 @@ class FeedbackView(APIView):
             tasks.send_mail.delay(fs.validated_data['subject'],
                                   fs.validated_data['message'],
                                   request.user.email,
-                                  (settings.FEEDBACK_EMAIL,))
+                                  (settings.CORE_FEEDBACK_EMAIL,))
             return Response(status=status.HTTP_202_ACCEPTED, data=fs.validated_data)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST, data=fs.errors)

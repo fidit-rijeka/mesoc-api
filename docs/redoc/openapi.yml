@@ -343,7 +343,7 @@ paths:
     post:
       operationId: Create feedback
       description:
-        'Send feedback to the email specified in `settings.FEEDBACK_EMAIL`. Requires the user to be authenticated and
+        'Send feedback to the email specified in `settings.CORE_FEEDBACK_EMAIL`. Requires the user to be authenticated and
         verified.'
       requestBody:
         content:
