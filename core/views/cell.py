@@ -36,20 +36,20 @@ class CellViewSet(RetrieveModelMixin, GenericViewSet):
             document__cities__latitude=document_city.latitude,
         ).select_related('document').prefetch_related('keywords')
 
-        top10 = []
+        top = []
         document_keywords = document_cell.document.keywords.values_list('value', flat=True)
         for c in cells:
             keywords = c.keywords.values_list('value', flat=True)
             similarity = 1 - nltk.jaccard_distance(document_keywords, keywords)
 
             if similarity >= settings.CORE_CELL_SIMILARITY_THRESHOLD:
-                top10.append((c.document, similarity))
+                top.append((c.document, similarity))
 
-        top10 = sorted(top10, key=lambda x: x[1], reverse=True)[:10]
-        similarities = dict([(d[0].pk, d[1]) for d in top10])
+        top = sorted(top, key=lambda x: x[1], reverse=True)[:settings.CORE_NUM_SIMILAR_DOCUMENTS]
+        similarities = dict([(d[0].pk, d[1]) for d in top])
 
         document_serializer = SimilarDocumentSerializer(
-            [d[0] for d in top10],
+            [d[0] for d in top],
             many=True,
             context={'similarities': similarities}
         )

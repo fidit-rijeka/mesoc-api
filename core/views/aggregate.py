@@ -1,6 +1,7 @@
 import collections
 import decimal
 
+from django.conf import settings
 from django.db.models import Avg, Count
 
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
@@ -97,18 +98,18 @@ class AggregateCellSimilarityView(APIView):
                 document__cities__latitude=form.cleaned_data['latitude']
             ).select_related('document').prefetch_related('keywords')
 
-            top10 = []
+            top = []
             for cell in cells:
                 keywords = set(cell.keywords.values_list('value', flat=True))
 
                 similarity = 1 - nltk.jaccard_distance(agg_keywords, keywords)
-                top10.append((cell.document, similarity))
+                top.append((cell.document, similarity))
 
-            top10 = sorted(top10, key=lambda x: x[1], reverse=True)[:10]
-            similarities = dict([(d[0].pk, d[1]) for d in top10])
+            top = sorted(top, key=lambda x: x[1], reverse=True)[:settings.CORE_NUM_SIMILAR_DOCUMENTS]
+            similarities = dict([(d[0].pk, d[1]) for d in top])
 
             document_serializer = SimilarDocumentSerializer(
-                [d[0] for d in top10],
+                [d[0] for d in top],
                 many=True,
                 context={'similarities': similarities}
             )
