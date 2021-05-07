@@ -36,4 +36,4 @@ class ColumnRowProbabilityClassifier(BaseClassifier):
 
         heatmap = column_probabilities.reshape(3, 1) * row_probabilities
 
-        return heatmap.reshape(-1, order='F').tolist()
+        return heatmap.transpose().tolist()
