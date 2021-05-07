@@ -37,10 +37,10 @@ class CellViewSet(RetrieveModelMixin, GenericViewSet):
         ).select_related('document').prefetch_related('keywords')
 
         top10 = []
-        document_keywords = document_cell.document.keywords.values_list('value', flat=True)
+        document_keywords = set(document_cell.document.keywords.values_list('value', flat=True))
         for c in cells:
             keywords = c.keywords.values_list('value', flat=True)
-            similarity = 1 - nltk.jaccard_distance(document_keywords, keywords)
+            similarity = 1 - nltk.jaccard_distance(document_keywords, set(keywords))
 
             if similarity >= settings.CORE_CELL_SIMILARITY_THRESHOLD:
                 top10.append((c.document, similarity))
