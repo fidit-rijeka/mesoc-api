@@ -147,8 +147,8 @@ FEEDBACK_EMAIL = 'info@mesoc-project.eu'
 
 # Verification and password reset
 CORE_API_BASE_URL = 'http://localhost:8000'
-CORE_VERIFICATION_BASE_URL = 'https://app.mesoc.dev/verification/verification'
-CORE_PASSWORD_RESET_BASE_URL = 'https://app.mesoc.dev/verification/password_reset'
+CORE_VERIFICATION_BASE_URL = 'https://app.mesoc.dev/verification'
+CORE_PASSWORD_RESET_BASE_URL = 'https://app.mesoc.dev/password_reset'
 CORE_PROCESSING_SUCCESS_URL = 'https://app.mesoc.dev/my-documents'
 CORE_PROCESSING_FAIL_URL = 'https://app.mesoc.dev/upload-document'
 
