@@ -11,7 +11,7 @@ class BaseKeywordExtractor(abc.ABC):
         raise NotImplementedError
 
 
-class YAKEKeywordExtractor(PostProcessing, BaseKeywordExtractor):
+class YAKEKeywordExtractor(BaseKeywordExtractor):
     def __init__(
             self,
             num_keywords,
@@ -47,8 +47,5 @@ class YAKEKeywordExtractor(PostProcessing, BaseKeywordExtractor):
         )
 
         keywords = [x[0] for x in keywords_yake_pke]
-
-        for processor in self.post_processors:
-            keywords = processor.process(keywords)
 
         return keywords
