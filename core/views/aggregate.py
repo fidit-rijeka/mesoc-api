@@ -59,12 +59,12 @@ class AggregateHeatmapView(APIView):
 
         try:
             latitude = decimal.Decimal(request.query_params.get('latitude', ''))
-        except ValueError:
+        except decimal.InvalidOperation:
             latitude = None
 
         try:
             longitude = decimal.Decimal(request.query_params.get('longitude', ''))
-        except ValueError:
+        except decimal.InvalidOperation:
             longitude = None
 
         type_ = getattr(RepositoryDocument, request.query_params.get('type', '').upper(), '')
