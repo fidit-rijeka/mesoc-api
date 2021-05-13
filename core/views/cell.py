@@ -14,6 +14,8 @@ from ..permissions import IsVerified
 from ..serializers.cell import CellSerializer, CellVariableSerializer
 from ..serializers.repository import SimilarDocumentSerializer
 
+from ..nlp.processing import KeyphraseToKeywordProcessor
+
 
 class CellViewSet(RetrieveModelMixin, GenericViewSet):
     queryset = Cell.objects.all()
@@ -37,16 +39,22 @@ class CellViewSet(RetrieveModelMixin, GenericViewSet):
         ).select_related('document').prefetch_related('keywords')
 
         top10 = []
-        document_keywords = set(document_cell.document.keywords.values_list('value', flat=True))
-        for c in cells:
-            keywords = c.keywords.values_list('value', flat=True)
-            similarity = 1 - nltk.jaccard_distance(document_keywords, set(keywords))
+        processor = KeyphraseToKeywordProcessor()
+        document_keywords = document_cell.document.keywords.values_list('value', flat=True)
+        document_keywords = set(processor.process(document_keywords))
+        if document_keywords:
+            for c in cells:
+                keywords = set(processor.process(c.keywords.values_list('value', flat=True)))
+                similarity = 1 - nltk.jaccard_distance(document_keywords, keywords)
 
-            if similarity >= settings.CORE_CELL_SIMILARITY_THRESHOLD:
-                top10.append((c.document, similarity))
+                if similarity >= settings.CORE_CELL_SIMILARITY_THRESHOLD:
+                    top10.append((c.document, similarity))
 
-        top10 = sorted(top10, key=lambda x: x[1], reverse=True)[:10]
-        similarities = dict([(d[0].pk, d[1]) for d in top10])
+            top10 = sorted(top10, key=lambda x: x[1], reverse=True)[:10]
+            similarities = dict([(d[0].pk, d[1]) for d in top10])
+        else:
+            top10 = []
+            similarities = {}
 
         document_serializer = SimilarDocumentSerializer(
             [d[0] for d in top10],

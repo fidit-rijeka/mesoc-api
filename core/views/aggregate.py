@@ -1,6 +1,7 @@
 import collections
 import decimal
 
+from django.conf import settings
 from django.db.models import Avg, Count
 
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
@@ -12,6 +13,8 @@ from ..forms import AggregateCellSimilarityForm
 from ..models import City, RepositoryCell, RepositoryCellKeyword, RepositoryDocument, RepositoryDocumentCity
 from ..serializers.city import CitySerializer
 from ..serializers.repository import SimilarDocumentSerializer
+
+from ..nlp.processing import KeyphraseToKeywordProcessor
 
 
 class AggregateLocationView(APIView):
@@ -82,30 +85,36 @@ class AggregateCellSimilarityView(APIView):
 
     def get(self, request, *ags, **kwargs):
         form = self.form_class(request.query_params)
-
         if form.is_valid():
-            agg_keywords = set(RepositoryCellKeyword.objects.filter(
+            processor = KeyphraseToKeywordProcessor()
+            agg_keywords = RepositoryCellKeyword.objects.filter(
                 cell__order=form.cleaned_data['cell'],
                 cell__document__cities__longitude=form.cleaned_data['longitude'],
                 cell__document__cities__latitude=form.cleaned_data['latitude']
-            ).values_list('value', flat=True))
+            ).values_list('value', flat=True)
+            agg_keywords = set(processor.process(agg_keywords))
 
-            cells = RepositoryCell.objects.filter(
-                order=form.cleaned_data['cell'],
-            ).exclude(
-                document__cities__longitude=form.cleaned_data['longitude'],
-                document__cities__latitude=form.cleaned_data['latitude']
-            ).select_related('document').prefetch_related('keywords')
+            if agg_keywords:
+                cells = RepositoryCell.objects.filter(
+                    order=form.cleaned_data['cell'],
+                ).exclude(
+                    document__cities__longitude=form.cleaned_data['longitude'],
+                    document__cities__latitude=form.cleaned_data['latitude']
+                ).select_related('document').prefetch_related('keywords')
 
-            top10 = []
-            for cell in cells:
-                keywords = set(cell.keywords.values_list('value', flat=True))
+                top10 = []
+                for cell in cells:
+                    keywords = set(processor.process(cell.keywords.values_list('value', flat=True)))
 
-                similarity = 1 - nltk.jaccard_distance(agg_keywords, keywords)
-                top10.append((cell.document, similarity))
+                    similarity = 1 - nltk.jaccard_distance(agg_keywords, keywords)
+                    if similarity >= settings.CORE_CELL_SIMILARITY_THRESHOLD:
+                        top10.append((cell.document, similarity))
 
-            top10 = sorted(top10, key=lambda x: x[1], reverse=True)[:10]
-            similarities = dict([(d[0].pk, d[1]) for d in top10])
+                top10 = sorted(top10, key=lambda x: x[1], reverse=True)[:10]
+                similarities = dict([(d[0].pk, d[1]) for d in top10])
+            else:
+                top10 = []
+                similarities = {}
 
             document_serializer = SimilarDocumentSerializer(
                 [d[0] for d in top10],
