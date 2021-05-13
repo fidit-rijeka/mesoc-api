@@ -2,14 +2,17 @@ import abc
 
 import numpy
 
+from core.nlp.processing import PreProcessing
+
 
 class BaseClassifier(abc.ABC):
     def classify_keywords(self, keywords):
         raise NotImplementedError
 
 
-class ColumnRowProbabilityClassifier(BaseClassifier):
-    def __init__(self, row_model, column_model, tfidf_vectorizer, row_threshold, column_threshold):
+class ColumnRowProbabilityClassifier(PreProcessing, BaseClassifier):
+    def __init__(self, row_model, column_model, tfidf_vectorizer, row_threshold, column_threshold, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._row_model = row_model
         self._column_model = column_model
         self._tfidf_vectorizer = tfidf_vectorizer
@@ -18,6 +21,9 @@ class ColumnRowProbabilityClassifier(BaseClassifier):
         self._column_threshold = column_threshold
 
     def classify_keywords(self, keywords):
+        for processor in self.pre_processors:
+            keywords = processor.process(keywords)
+
         tfidf = self._tfidf_vectorizer.transform([' '.join(keywords)])
 
         row_probabilities = self._row_model.predict_proba(tfidf)
@@ -36,4 +42,4 @@ class ColumnRowProbabilityClassifier(BaseClassifier):
 
         heatmap = column_probabilities.reshape(3, 1) * row_probabilities
 
-        return heatmap.reshape(-1, order='F').tolist()
+        return heatmap.transpose().tolist()

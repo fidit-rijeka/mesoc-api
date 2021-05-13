@@ -60,13 +60,11 @@ def convert_to_pdf(document_id):
 
 @shared_task(base=LoggedTask)
 def extract_keywords(text):
-    keyword_processor = nlp.processing.KeyphraseToKeywordProcessor()
     extractor = nlp.keyword_extraction.YAKEKeywordExtractor(
         settings.CORE_NUM_KEYWORDS,
         settings.CORE_YAKE_CANDIDATE_NGRAM,
         settings.CORE_YAKE_CANDIDATE_WINDOW_SIZE,
-        settings.CORE_YAKE_THRESHOLD,
-        post_processors=(keyword_processor,)
+        settings.CORE_YAKE_THRESHOLD
     )
 
     keywords = extractor.extract_keywords(text)
@@ -85,12 +83,14 @@ def classify_document(keywords):
     with open(settings.CORE_CRP_TFIDF_VECTORIZER, 'rb') as f:
         tfidf_vectorizer = pickle.load(f)
 
+    keyword_processor = nlp.processing.KeyphraseToKeywordProcessor()
     classifier = nlp.classification.ColumnRowProbabilityClassifier(
         row_model,
         column_model,
         tfidf_vectorizer,
         settings.CORE_CRP_ROW_THRESHOLD,
-        settings.CORE_CRP_COLUMN_THRESHOLD
+        settings.CORE_CRP_COLUMN_THRESHOLD,
+        pre_processors=(keyword_processor,)
     )
 
     return keywords, classifier.classify_keywords(keywords)
@@ -99,14 +99,13 @@ def classify_document(keywords):
 @shared_task(base=LoggedTask)
 def commit_results(results, document_id):
     keywords = results[0]
-    heatmap = numpy.array(results[1], order='F')
+    heatmap = numpy.array(results[1]).reshape(-1, order='F')  # reorder so we get column-major indices
 
     document = Document.objects.filter(id=document_id).get()
 
     cells = []
-
-    nonzero = heatmap.nonzero()
-    for index in nonzero[0]:
+    nonzero = heatmap.nonzero()[0]
+    for index in nonzero:
         cell = Cell(classification=heatmap[index], order=index, document=document)
         cells.append(cell)
 

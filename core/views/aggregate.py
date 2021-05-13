@@ -14,6 +14,8 @@ from ..models import City, RepositoryCell, RepositoryCellKeyword, RepositoryDocu
 from ..serializers.city import CitySerializer
 from ..serializers.repository import SimilarDocumentSerializer
 
+from ..nlp.processing import KeyphraseToKeywordProcessor
+
 
 class AggregateLocationView(APIView):
     def get(self, request):
@@ -60,12 +62,12 @@ class AggregateHeatmapView(APIView):
 
         try:
             latitude = decimal.Decimal(request.query_params.get('latitude', ''))
-        except ValueError:
+        except decimal.InvalidOperation:
             latitude = None
 
         try:
             longitude = decimal.Decimal(request.query_params.get('longitude', ''))
-        except ValueError:
+        except decimal.InvalidOperation:
             longitude = None
 
         type_ = getattr(RepositoryDocument, request.query_params.get('type', '').upper(), '')
@@ -83,30 +85,36 @@ class AggregateCellSimilarityView(APIView):
 
     def get(self, request, *ags, **kwargs):
         form = self.form_class(request.query_params)
-
         if form.is_valid():
-            agg_keywords = set(RepositoryCellKeyword.objects.filter(
+            processor = KeyphraseToKeywordProcessor()
+            agg_keywords = RepositoryCellKeyword.objects.filter(
                 cell__order=form.cleaned_data['cell'],
                 cell__document__cities__longitude=form.cleaned_data['longitude'],
                 cell__document__cities__latitude=form.cleaned_data['latitude']
-            ).values_list('value', flat=True))
+            ).values_list('value', flat=True)
+            agg_keywords = set(processor.process(agg_keywords))
 
-            cells = RepositoryCell.objects.filter(
-                order=form.cleaned_data['cell'],
-            ).exclude(
-                document__cities__longitude=form.cleaned_data['longitude'],
-                document__cities__latitude=form.cleaned_data['latitude']
-            ).select_related('document').prefetch_related('keywords')
+            if agg_keywords:
+                cells = RepositoryCell.objects.filter(
+                    order=form.cleaned_data['cell'],
+                ).exclude(
+                    document__cities__longitude=form.cleaned_data['longitude'],
+                    document__cities__latitude=form.cleaned_data['latitude']
+                ).select_related('document').prefetch_related('keywords')
 
-            top = []
-            for cell in cells:
-                keywords = set(cell.keywords.values_list('value', flat=True))
+                top = []
+                for cell in cells:
+                    keywords = set(processor.process(cell.keywords.values_list('value', flat=True)))
 
-                similarity = 1 - nltk.jaccard_distance(agg_keywords, keywords)
-                top.append((cell.document, similarity))
+                    similarity = 1 - nltk.jaccard_distance(agg_keywords, keywords)
+                    if similarity >= settings.CORE_CELL_SIMILARITY_THRESHOLD:
+                        top.append((cell.document, similarity))
 
-            top = sorted(top, key=lambda x: x[1], reverse=True)[:settings.CORE_NUM_SIMILAR_DOCUMENTS]
-            similarities = dict([(d[0].pk, d[1]) for d in top])
+                top = sorted(top, key=lambda x: x[1], reverse=True)[:settings.CORE_NUM_SIMILAR_DOCUMENTS]
+                similarities = dict([(d[0].pk, d[1]) for d in top])
+            else:
+                top = []
+                similarities = {}
 
             document_serializer = SimilarDocumentSerializer(
                 [d[0] for d in top],
