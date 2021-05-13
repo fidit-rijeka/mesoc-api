@@ -1,6 +1,7 @@
 import collections
 import decimal
 
+from django.conf import settings
 from django.db.models import Avg, Count
 
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
@@ -106,7 +107,8 @@ class AggregateCellSimilarityView(APIView):
                     keywords = set(processor.process(cell.keywords.values_list('value', flat=True)))
 
                     similarity = 1 - nltk.jaccard_distance(agg_keywords, keywords)
-                    top10.append((cell.document, similarity))
+                    if similarity >= settings.CORE_CELL_SIMILARITY_THRESHOLD:
+                        top10.append((cell.document, similarity))
 
                 top10 = sorted(top10, key=lambda x: x[1], reverse=True)[:10]
                 similarities = dict([(d[0].pk, d[1]) for d in top10])
