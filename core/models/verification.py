@@ -13,13 +13,13 @@ from .. import tasks
 class Verification(Model):
     uuid = UUIDField(unique=True, default=uuid.uuid4)
     requested_at = DateTimeField(auto_now_add=True)
-    expires_at = DateTimeField(default=now() + datetime.timedelta(days=settings.PASSWORD_RESET_MAX_AGE))
+    expires_at = DateTimeField(default=now() + datetime.timedelta(days=settings.CORE_PASSWORD_RESET_MAX_AGE))
     user = OneToOneField(auth.get_user_model(), CASCADE)
 
     def regenerate(self):
         self.uuid = uuid.uuid4()
         self.requested_at = now()
-        self.expires_at = self.requested_at + datetime.timedelta(days=settings.PASSWORD_RESET_MAX_AGE)
+        self.expires_at = self.requested_at + datetime.timedelta(days=settings.CORE_PASSWORD_RESET_MAX_AGE)
 
     def send_by_email(self):
         base_url = settings.CORE_VERIFICATION_BASE_URL

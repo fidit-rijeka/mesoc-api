@@ -102,22 +102,22 @@ class AggregateCellSimilarityView(APIView):
                     document__cities__latitude=form.cleaned_data['latitude']
                 ).select_related('document').prefetch_related('keywords')
 
-                top10 = []
+                top = []
                 for cell in cells:
                     keywords = set(processor.process(cell.keywords.values_list('value', flat=True)))
 
                     similarity = 1 - nltk.jaccard_distance(agg_keywords, keywords)
                     if similarity >= settings.CORE_CELL_SIMILARITY_THRESHOLD:
-                        top10.append((cell.document, similarity))
+                        top.append((cell.document, similarity))
 
-                top10 = sorted(top10, key=lambda x: x[1], reverse=True)[:10]
-                similarities = dict([(d[0].pk, d[1]) for d in top10])
+                top = sorted(top, key=lambda x: x[1], reverse=True)[:settings.CORE_NUM_SIMILAR_DOCUMENTS]
+                similarities = dict([(d[0].pk, d[1]) for d in top])
             else:
-                top10 = []
+                top = []
                 similarities = {}
 
             document_serializer = SimilarDocumentSerializer(
-                [d[0] for d in top10],
+                [d[0] for d in top],
                 many=True,
                 context={'similarities': similarities}
             )

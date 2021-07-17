@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '1(9g@&*=vk@bapc77qy1e*28zhj%j*p-90ud*m6elj%g(w1nl-'
+SECRET_KEY = 'tt1a@6qc^n3-#5_#x)2le$ews&ihma20webo(r_mvl&7^e=2gi'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -31,17 +31,13 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
-    'core.apps.CoreConfig',
-    'anymail'
+    'core.apps.CoreConfig'
 ]
 
 MIDDLEWARE = [
@@ -131,19 +127,11 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# EMAIL_BACKEND = 'anymail.backends.mailgun.EmailBackend'
-
 EMAIL_HOST_USER = 'noreply'
 EMAIL_HOST_PASSWORD = 'test'
 DEFAULT_FROM_EMAIL = 'noreply@mail.mesoc.dev'
-FEEDBACK_EMAIL = 'info@mesoc-project.eu'
+CORE_FEEDBACK_EMAIL = 'info@mesoc-project.eu'
 
-# ANYMAIL = {
-#     'IGNORE_RECIPIENT_STATUS': True,
-#
-#     'MAILGUN_API_KEY': '<api_key>',
-#     'MAILGUN_API_URL': 'https://api.eu.mailgun.net/v3',
-# }
 
 # Verification and password reset
 CORE_API_BASE_URL = 'http://localhost:8000'
@@ -152,8 +140,8 @@ CORE_PASSWORD_RESET_BASE_URL = 'https://app.mesoc.dev/password_reset'
 CORE_PROCESSING_SUCCESS_URL = 'https://app.mesoc.dev/my-documents'
 CORE_PROCESSING_FAIL_URL = 'https://app.mesoc.dev/upload-document'
 
-VERIFICATION_MAX_AGE = 14
-PASSWORD_RESET_MAX_AGE = 14
+CORE_VERIFICATION_MAX_AGE = 14
+CORE_PASSWORD_RESET_MAX_AGE = 14
 
 # Celery
 
@@ -175,9 +163,9 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 # File upload
 
-FILE_MAX_SIZE = 31457280  # 30 MiB
-FILE_ALLOWED_MIME_TYPES = ('text/plain', 'application/pdf')
-FILE_ALLOWED_EXTENSIONS = ('txt', 'pdf')
+CORE_FILE_MAX_SIZE = 31457280  # 30 MiB
+CORE_ALLOWED_MIME_TYPES = ('text/plain', 'application/pdf')
+CORE_ALLOWED_EXTENSIONS = ('txt', 'pdf')
 
 # NLP
 
@@ -197,6 +185,8 @@ CORE_CRP_ROW_THRESHOLD = 0.1
 
 # Repository settings
 
-CORE_CELL_SIMILARITY_THRESHOLD = 0.0
+CORE_CELL_SIMILARITY_THRESHOLD = 0.3
 
-REPOSITORY_DOCUMENT_PREVIEW_URL = 'http://mesoc-doc.uniri.hr'
+CORE_NUM_SIMILAR_DOCUMENTS = 10
+
+CORE_REPOSITORY_PREVIEW_URL = 'http://mesoc-doc.uniri.hr'

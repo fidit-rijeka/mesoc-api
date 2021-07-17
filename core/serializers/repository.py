@@ -14,7 +14,7 @@ class SimilarDocumentSerializer(ModelSerializer):
         fields = ('document_title', 'similarity', 'preview_url')
 
     def get_preview_url(self, obj):
-        return '{}/{}.html'.format(settings.REPOSITORY_DOCUMENT_PREVIEW_URL, obj.id)
+        return '{}/{}.html'.format(settings.CORE_REPOSITORY_PREVIEW_URL, obj.id)
 
     def get_similarity(self, obj):
         return self.context['similarities'][obj.pk]

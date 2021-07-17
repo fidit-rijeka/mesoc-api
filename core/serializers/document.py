@@ -89,9 +89,9 @@ class DocumentUploadSerializer(BaseDocumentSerializer):
         allow_empty_file=False,
         write_only=True,
         validators=(
-            FileMaxSizeValidator(settings.FILE_MAX_SIZE),
-            FileExtensionValidator(settings.FILE_ALLOWED_EXTENSIONS),
-            FileMimeTypeValidator(settings.FILE_ALLOWED_MIME_TYPES)
+            FileMaxSizeValidator(settings.CORE_FILE_MAX_SIZE),
+            FileExtensionValidator(settings.CORE_ALLOWED_EXTENSIONS),
+            FileMimeTypeValidator(settings.CORE_ALLOWED_MIME_TYPES)
         )
     )
 
