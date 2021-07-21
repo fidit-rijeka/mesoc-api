@@ -10,11 +10,15 @@ from django.utils.timezone import now
 from .. import tasks
 
 
+def _expiration_datetime():
+    return now() + datetime.timedelta(days=settings.CORE_PASSWORD_RESET_MAX_AGE)
+
+
 class PasswordReset(Model):
     uuid = UUIDField(unique=True, default=uuid.uuid4)
     user = OneToOneField(auth.get_user_model(), CASCADE)
     requested_at = DateTimeField(auto_now_add=True)
-    expires_at = DateTimeField(default=now() + datetime.timedelta(days=settings.CORE_PASSWORD_RESET_MAX_AGE))
+    expires_at = DateTimeField(default=_expiration_datetime)
 
     def regenerate(self):
         self.uuid = uuid.uuid4()
