@@ -2,9 +2,7 @@ import abc
 
 import nltk
 
-default_sent_tokenizer = nltk.load('tokenizers/punkt/english.pickle')
-default_word_tokenizer = nltk.NLTKWordTokenizer()
-default_lemmatizer = nltk.WordNetLemmatizer()
+from core.nlp.processing import misc
 
 
 class BaseKeywordsProcessor(abc.ABC):
@@ -17,8 +15,8 @@ class KeyphraseToKeywordProcessor(BaseKeywordsProcessor):
     def __init__(
             self,
             *args,
-            word_tokenizer=default_word_tokenizer,
-            lemmatizer=default_lemmatizer,
+            word_tokenizer=misc.default_word_tokenizer,
+            lemmatizer=misc.default_lemmatizer,
             stopwords=nltk.corpus.stopwords.words('english'),
             **kwargs
     ):

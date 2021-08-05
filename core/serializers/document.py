@@ -16,6 +16,9 @@ class BaseDocumentSerializer(HyperlinkedModelSerializer):
     def get_heatmap(self, obj):
         return reverse('document-heatmap', args=(obj.pk,), request=self.context['request'])
 
+    def get_impacts(self, obj):
+        return reverse('document-impacts', args=(obj.pk,), request=self.context['request'])
+
     def get_user(self, obj):
         return reverse('account', request=self.context['request'])
 
@@ -40,6 +43,7 @@ class DocumentSerializer(BaseDocumentSerializer):
     title = CharField(max_length=100, validators=(MinLengthValidator(1),), source='file_title', read_only=True)
     location = HyperlinkedRelatedField(view_name='city-detail', read_only=True)
     heatmap = SerializerMethodField(read_only=True)
+    impacts = SerializerMethodField(read_only=True)
     user = SerializerMethodField(read_only=True)
 
     class Meta:
@@ -51,6 +55,7 @@ class DocumentSerializer(BaseDocumentSerializer):
             'language',
             'location',
             'heatmap',
+            'impacts',
             'user',
             'url',
         )
@@ -84,6 +89,7 @@ class DocumentUploadSerializer(BaseDocumentSerializer):
     title = CharField(max_length=100, validators=(MinLengthValidator(1),), source='file_title',)
     location = HyperlinkedRelatedField(view_name='city-detail', queryset=City.objects.exclude(name='Unknown'))
     heatmap = SerializerMethodField(read_only=True)
+    impacts = SerializerMethodField(read_only=True)
     user = SerializerMethodField(read_only=True)
     file = FileField(
         allow_empty_file=False,
@@ -104,6 +110,7 @@ class DocumentUploadSerializer(BaseDocumentSerializer):
             'language',
             'location',
             'heatmap',
+            'impacts',
             'user',
             'file',
             'url',

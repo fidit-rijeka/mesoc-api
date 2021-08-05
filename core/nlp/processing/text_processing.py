@@ -1,5 +1,6 @@
 import abc
 import re
+import string
 
 import nltk
 
@@ -9,8 +10,6 @@ from textacy.preprocessing.normalize import whitespace
 from textacy.preprocessing.normalize import quotation_marks
 
 from . import misc
-
-default_sent_tokenizer = nltk.load('tokenizers/punkt/english.pickle')
 
 
 class BaseTextProcessor(abc.ABC):
@@ -37,7 +36,7 @@ class CompoundEntitiesProcessor(BaseTextProcessor):
 
 
 class MinSentenceLengthProcessor(BaseTextProcessor):
-    def __init__(self, min_sentence_length, *args, sent_tokenizer=default_sent_tokenizer, **kwargs):
+    def __init__(self, min_sentence_length, *args, sent_tokenizer=misc.default_sent_tokenizer, **kwargs):
         super().__init__(*args, **kwargs)
 
         if min_sentence_length < 1:
@@ -77,3 +76,22 @@ class StopsProcessor(BaseTextProcessor):
         text = whitespace(text)
 
         return text.lower()
+
+
+class PunctuationProcessor(BaseTextProcessor):
+    def __init__(self):
+        self._punctuation = re.compile(r'[{}]'.format(string.punctuation))
+
+    def process(self, text):
+        text = self._punctuation.sub('', text)
+        return whitespace(text)
+
+
+class DigitProcessor(BaseTextProcessor):
+    def process(self, text):
+        return text.translate(str.maketrans('', '', string.digits))
+
+
+class TokenProcessor(BaseTextProcessor):
+    def process(self, text):
+        return misc.default_word_tokenizer(text)

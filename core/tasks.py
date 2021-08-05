@@ -9,7 +9,11 @@ from django.core import mail
 from django.template.loader import render_to_string
 
 from core import nlp
-from .models import Cell, Document, DocumentKeyword
+from .models import Cell, Document, DocumentImpact, DocumentKeyword, Impact, ImpactKeyword
+from .nlp.keyword_extraction import NgramImpactExtractor
+from .nlp.processing.text_processing import (
+    StopsProcessor, MinSentenceLengthProcessor, PunctuationProcessor, DigitProcessor
+)
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +101,31 @@ def classify_document(keywords):
 
 
 @shared_task(base=LoggedTask)
+def extract_impacts(results, document_id):
+    impacts = Impact.objects.values_list('lemma', 'keywords__value')
+    impact_map = {}
+    for lemma, kw in impacts:
+        try:
+            impact_map[lemma].append(kw)
+        except KeyError:
+            impact_map[lemma] = [kw]
+
+    extractor = NgramImpactExtractor(
+        impact_map,
+        pre_processors=(
+            StopsProcessor(),
+            DigitProcessor(),
+            MinSentenceLengthProcessor(settings.CORE_MIN_SENTENCE_LENGTH),
+            PunctuationProcessor()
+        )
+    )
+
+    impacts = extractor.extract_keywords(Document.objects.filter(id=document_id).get().contents)
+
+    return (*results, impacts)
+
+
+@shared_task(base=LoggedTask)
 def commit_results(results, document_id):
     keywords = results[0]
     heatmap = numpy.array(results[1]).reshape(-1, order='F')  # reorder so we get column-major indices
@@ -116,6 +145,28 @@ def commit_results(results, document_id):
 
     Cell.objects.bulk_create(cells)
     DocumentKeyword.objects.bulk_create(document_keywords)
+
+    impacts = results[2]
+    impacts_db = Impact.objects.filter(lemma__in=impacts.keys()).all()
+
+    document_impacts = []
+    for i in impacts_db:
+        strength = impacts[i.lemma]['strength']
+        document_impacts.append(DocumentImpact(document=document, impact=i, strength=strength))
+
+    DocumentImpact.objects.bulk_create(document_impacts)
+    document_impacts = DocumentImpact.objects.select_related('impact').filter(document=document).all()
+
+    keywords_db = {k.value: k for k in ImpactKeyword.objects.all()}
+    impact_keywords = []
+    Through = DocumentImpact.keywords.through
+    for i in document_impacts:
+        for kw in impacts[i.impact.lemma]['keywords']:
+            k = Through(documentimpact=i, impactkeyword=keywords_db[kw])
+            impact_keywords.append(k)
+
+    Through.objects.bulk_create(impact_keywords)
+
     document.state = document.PROCESSED
     document.save()
 

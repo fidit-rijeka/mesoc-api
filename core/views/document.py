@@ -12,6 +12,7 @@ from ..models import Document
 from ..permissions import IsVerified
 from ..serializers.cell import CellSerializer
 from ..serializers.document import DocumentUploadSerializer, DocumentSerializer
+from core.serializers.impact import DocumentImpactSerializer
 
 
 class DocumentViewSet(ModelViewSet):
@@ -45,6 +46,22 @@ class DocumentViewSet(ModelViewSet):
             data=CellSerializer(cells, many=True, context={'request': self.request}).data
         )
 
+    @action(methods=('get',), detail=True)
+    def impacts(self, request, pk=None,):
+        try:
+            column = int(request.query_params.get('column', -1))
+        except ValueError:
+            column = -1
+
+        document = self.get_object()
+        impacts = document.document_impacts.prefetch_related('keywords')
+        impacts = impacts.filter(impact__column=column) if column in range(0, 3) else impacts.all()
+
+        return Response(
+            status=HTTP_200_OK,
+            data=DocumentImpactSerializer(impacts, many=True, context={'request': self.request}).data
+        )
+
     def get_serializer(self, *args, **kwargs):
         context = {'request': self.request}
         return self.serializer_classes.get(self.action, self.serializer_class)(*args, context=context, **kwargs)
@@ -57,6 +74,7 @@ class DocumentViewSet(ModelViewSet):
             tasks.convert_to_pdf.s(document_id),
             tasks.extract_keywords.s(),
             tasks.classify_document.s(),
+            tasks.extract_impacts.s(document_id),
             tasks.commit_results.s(document_id),
             tasks.mail_results.si(document_id)
         ).apply_async(link_error=tasks.fail_document.si(document_id))

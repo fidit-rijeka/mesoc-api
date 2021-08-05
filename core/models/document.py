@@ -1,11 +1,14 @@
 import uuid
 
 from django.contrib import auth
-from django.core.validators import MinLengthValidator
+from django.core.validators import MinLengthValidator, MinValueValidator, MaxValueValidator
 from django.db.models import (
-    BooleanField, CASCADE, CharField, DateTimeField, FileField, ForeignKey, IntegerField, ManyToManyField, Model,
-    PROTECT, UUIDField
-)
+    BooleanField, CASCADE, CharField, DateTimeField, FileField, ForeignKey, IntegerField, ManyToManyField,
+    Model, PROTECT, UUIDField,
+    UniqueConstraint, FloatField)
+
+import magic
+import fitz
 
 
 class Document(Model):
@@ -32,11 +35,24 @@ class Document(Model):
     state = IntegerField(choices=STATES.items(), blank=True, default=PROCESSING)
     cities = ManyToManyField('core.City', through='core.DocumentCity', related_name='cities')
     language = ForeignKey('core.Language', on_delete=PROTECT)
+    impacts = ManyToManyField('core.Impact', through='core.DocumentImpact', related_name='documents')
     user = ForeignKey(auth.get_user_model(), on_delete=CASCADE, related_name='documents')
 
     @property
     def location(self):
         return self.cities.filter(documentcity__primary=True).get()
+
+    @property
+    def contents(self):
+        with self.file.open() as f:
+            contents = f.read()
+            if magic.from_buffer(contents, True) == 'application/pdf':
+                d = fitz.Document(stream=contents, filetype='application/pdf')
+                contents = '\n'.join(p.get_text() for p in d)
+            else:
+                contents = contents.decode('utf-8')
+
+        return contents
 
 
 class DocumentCity(Model):
@@ -48,3 +64,15 @@ class DocumentCity(Model):
 class DocumentKeyword(Model):
     document = ForeignKey('core.Document', on_delete=CASCADE, related_name='keywords')
     value = CharField(max_length=100)
+
+
+class DocumentImpact(Model):
+    class Meta:
+        constraints = (
+            UniqueConstraint(fields=('document', 'impact'), name='unique_document_impact'),
+        )
+
+    strength = FloatField(validators=(MinValueValidator(0.0), MaxValueValidator(1.0)))
+    document = ForeignKey('core.Document', CASCADE, related_name='document_impacts')
+    impact = ForeignKey('core.Impact', CASCADE, related_name='impact_documents')
+    keywords = ManyToManyField('core.ImpactKeyword', related_name='document_impacts')

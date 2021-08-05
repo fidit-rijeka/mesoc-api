@@ -263,6 +263,55 @@ paths:
           description: ''
       tags:
         - aggregates
+  /aggregates/impact/:
+    get:
+      operationId: Get impact aggregate
+      description: 'Get average impact strength.'
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum:
+              - scientific
+              - pilot
+            example: 'scientific'
+          required: false
+          description: "Filter aggregate by document type."
+        - in: query
+          name: latitude
+          schema:
+            type: number
+            example: 52.520008
+          required: false
+          description: "Filter aggregate by latitude."
+        - in: query
+          name: longitude
+          schema:
+            type: number
+            example: 13.404954
+          required: false
+          description: "Filter aggregate by longitude."
+        - in: query
+          name: column
+          schema:
+            type: integer
+            example: 0
+            minimum: 0
+            maximum: 2
+          required: false
+          description: "Filter aggregate by impact column."
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ImpactAggregate'
+          description: ''
+      tags:
+        - aggregates
   /aggregates/similar/cell/:
     get:
       operationId: Get cell similar documents of an aggregate
@@ -298,7 +347,54 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CellSimilarity'
+                  $ref: '#/components/schemas/Similarity'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FormError'
+          description: ''
+      tags:
+        - aggregates
+  /aggregates/similar/impact/:
+    get:
+      operationId: Get impact similar documents of an aggregate
+      description: 'Get impact similar documents of an aggregate.'
+      parameters:
+        - in: query
+          name: latitude
+          schema:
+            type: number
+            example: 52.520008
+          required: true
+          description: "Filter aggregate by latitude."
+        - in: query
+          name: longitude
+          schema:
+            type: number
+            example: 13.404954
+          required: true
+          description: "Filter aggregate by longitude."
+        - in: query
+          name: column
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 2
+            example: 0
+          required: true
+          description: "Filter aggregate by impact column. This parameters corresponds to the index of a 1x3 matrix in column-major order with the top left element having index of 0."
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Similarity'
           description: ''
         '400':
           content:
@@ -316,9 +412,7 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: 'uuid'
-          pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
+          type: integer
     get:
       operationId: Get cell
       description: 'Get specific heatmap cell. Requires the user to be authenticated and verified.'
@@ -339,6 +433,60 @@ paths:
         - 'DRFToken': []
       tags:
         - cell
+  /impact/{id}/:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      operationId: Get impact
+      description: 'Get specific document impact. Requires the user to be authenticated and verified.'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Impact'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+          description: 'Document impact with the specified `id` does not belong to the authenticated user or does not exist.'
+      security:
+        - 'DRFToken': []
+      tags:
+        - impact
+  /impacts/{id}/similar:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      operationId: Get impact similar documents
+      description: 'Get impact similar documents of a specific document. Requires the user to be authenticated and verified.'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Similarity'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+          description: 'Cell with the specified `id` is not associated with the authenticated user or does not exist.'
+      security:
+        - DRFToken: []
+      tags:
+        - impact
   /feedback/:
     post:
       operationId: Create feedback
@@ -599,7 +747,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CellSimilarity'
+                $ref: '#/components/schemas/Similarity'
           description: ''
         '404':
           content:
@@ -737,7 +885,38 @@ components:
           type: string
           format: url
           example: 'http://api.mesoc.dev/cells/4/'
-    CellSimilarity:
+    Impact:
+      type: object
+      properties:
+        impact:
+          type: string
+          example: "Better capacity to socialize"
+        column:
+          type: integer
+          example: 0
+          minimum: 0
+          maximum: 2
+        strength:
+          type: number
+          minimum: 0
+          maximum: 1
+          example: 0.47
+        keywords:
+          type: array
+          example: ['sense increased', 'increased civic']
+        similar:
+          type: string
+          format: url
+          example: 'https://api.mesoc.dev/impacts/4/similar/'
+        document:
+          type: string
+          format: url
+          example: 'https://api.mesoc.dev/documents/bec0f39a-503d-413e-968f-a289f3420621/'
+        url:
+          type: string
+          format: url
+          example: 'http://api.mesoc.dev/impacts/4/'
+    Similarity:
       type: object
       properties:
         document_title:
@@ -1065,6 +1244,26 @@ components:
         classification:
           type: number
           example: 0.7
+    ImpactAggregate:
+      type: object
+      properties:
+        impact:
+          type: string
+          example: "Better capacity to socialize"
+        column:
+          type: integer
+          example: 0
+          minimum: 0
+          maximum: 2
+        strength:
+          type: number
+          minimum: 0
+          maximum: 1
+          example: 0.47
+        keywords:
+          type: array
+          example: ['sense increased', 'increased civic']
+
   securitySchemes:
     DRFToken:
       type: http
