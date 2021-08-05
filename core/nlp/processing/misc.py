@@ -1,6 +1,12 @@
 import re
 import string
 
+import nltk
+
+default_sent_tokenizer = nltk.load('tokenizers/punkt/english.pickle')
+default_word_tokenizer = nltk.NLTKWordTokenizer()
+default_lemmatizer = nltk.WordNetLemmatizer()
+
 STOPWORDS = [
     'ie',
     'i.e.',

@@ -2,8 +2,12 @@ from django.urls import include, path
 
 from rest_framework.routers import SimpleRouter
 
-from .views.aggregate import AggregateHeatmapView, AggregateLocationView, AggregateCellSimilarityView
+from .views.aggregate import (
+    AggregateCellSimilarityView, AggregateHeatmapView, AggregateImpactView, AggregateLocationView,
+    AggregateImpactSimilarityView
+)
 from .views.cell import CellViewSet
+from .views.impact import DocumentImpactViewSet
 from .views.location import LocationViewSet
 from .views.document import DocumentViewSet
 from .views.feedback import FeedbackView
@@ -18,6 +22,7 @@ router = SimpleRouter()
 router.register('account/verification', VerificationViewSet, basename='verification')
 router.register('account/password_reset', PasswordResetViewSet, basename='password-reset')
 router.register('cells', CellViewSet)
+router.register('impacts', DocumentImpactViewSet)
 router.register('locations', LocationViewSet)
 router.register('languages', LanguageViewSet)
 router.register('documents', DocumentViewSet)
@@ -32,6 +37,8 @@ urlpatterns = [
     ),
     path('aggregates/location/', AggregateLocationView().as_view(), name='aggregate-location'),
     path('aggregates/heatmap/', AggregateHeatmapView().as_view(), name='aggregate-heatmap'),
-    path('aggregates/similar/cell/', AggregateCellSimilarityView().as_view(), name='aggregate-similar'),
+    path('aggregates/impact/', AggregateImpactView().as_view(), name='aggregate-impact'),
+    path('aggregates/similar/cell/', AggregateCellSimilarityView().as_view(), name='aggregate-cell-similar'),
+    path('aggregates/similar/impact/', AggregateImpactSimilarityView().as_view(), name='aggregate-impact-similar'),
     path('feedback/', FeedbackView.as_view())
 ]

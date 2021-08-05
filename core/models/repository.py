@@ -1,7 +1,7 @@
 from django.core.validators import MaxValueValidator, MinLengthValidator, MinValueValidator
 from django.db.models import (
     BooleanField, CASCADE, CharField, DateTimeField, FloatField, ForeignKey, IntegerField, ManyToManyField, Model,
-    PositiveIntegerField
+    PositiveIntegerField, UniqueConstraint
 )
 
 
@@ -18,6 +18,11 @@ class RepositoryDocument(Model):
     type = IntegerField(choices=TYPES.items())
     document_title = CharField(max_length=400, validators=(MinLengthValidator(1),))
     processed_at = DateTimeField(auto_now=True)
+    impacts = ManyToManyField(
+        'core.Impact',
+        through='core.RepositoryDocumentImpact',
+        related_name='repository_documents'
+    )
     cities = ManyToManyField('core.City', through='core.RepositoryDocumentCity',)
 
 
@@ -38,3 +43,15 @@ class RepositoryCell(Model):
 class RepositoryCellKeyword(Model):
     value = CharField(max_length=100)
     cell = ForeignKey('core.RepositoryCell', CASCADE, related_name='keywords')
+
+
+class RepositoryDocumentImpact(Model):
+    class Meta:
+        constraints = (
+            UniqueConstraint(fields=('document', 'impact'), name='unique_repository_document_impact'),
+        )
+
+    strength = FloatField(validators=(MinValueValidator(0.0), MaxValueValidator(1.0)))
+    document = ForeignKey('core.RepositoryDocument', CASCADE, related_name='repository_document_impacts')
+    impact = ForeignKey('core.Impact', CASCADE, related_name='impact_repository_documents')
+    keywords = ManyToManyField('core.ImpactKeyword', related_name='repository_document_impacts')
