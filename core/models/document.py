@@ -3,25 +3,32 @@ import uuid
 from django.contrib import auth
 from django.core.validators import MinLengthValidator, MinValueValidator, MaxValueValidator
 from django.db.models import (
-    BooleanField, CASCADE, CharField, DateTimeField, FileField, ForeignKey, IntegerField, ManyToManyField,
-    Model, PROTECT, UUIDField,
-    UniqueConstraint, FloatField)
+    BooleanField, CASCADE, CharField, DateTimeField, FileField, FloatField, ForeignKey, IntegerField, ManyToManyField,
+    Model, PROTECT, TextField, UUIDField, UniqueConstraint)
 
 import magic
 import fitz
 
 
 class Document(Model):
-    PROCESSING = 0
-    FAILED = 1
-    PROCESSED = 2
-    DISMISSED = 3
+    PROCESSING = 'processing'
+    FAILED = 'failed'
+    PROCESSED = 'processed'
+    DISMISSED = 'dismissed'
+
+    SCIENTIFIC = 'scientific'
+    PILOT = 'pilot'
 
     STATES = {
         PROCESSING: 'processing',
         FAILED: 'failed',
         PROCESSED: 'processed',
         DISMISSED: 'dismissed'  # failure acknowledged by the user
+    }
+
+    TYPES = {
+        SCIENTIFIC: SCIENTIFIC,
+        PILOT: PILOT
     }
 
     class Meta:
@@ -31,8 +38,10 @@ class Document(Model):
     file = FileField(upload_to='documents/',)
     file_title = CharField(max_length=200, validators=(MinLengthValidator(1),),)
     document_title = CharField(blank=True, default='', max_length=200, validators=(MinLengthValidator(1),))
+    abstract = TextField(max_length=1000, validators=(MinLengthValidator(1),))
+    type = CharField(max_length=10, choices=TYPES.items())
     uploaded_at = DateTimeField(auto_now_add=True, blank=True)
-    state = IntegerField(choices=STATES.items(), blank=True, default=PROCESSING)
+    state = CharField(max_length=10, choices=STATES.items(), blank=True, default=PROCESSING)
     cities = ManyToManyField('core.City', through='core.DocumentCity', related_name='cities')
     language = ForeignKey('core.Language', on_delete=PROTECT)
     impacts = ManyToManyField('core.Impact', through='core.DocumentImpact', related_name='documents')

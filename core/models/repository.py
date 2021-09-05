@@ -6,8 +6,8 @@ from django.db.models import (
 
 
 class RepositoryDocument(Model):
-    SCIENTIFIC = 1
-    PILOT = 2
+    SCIENTIFIC = 'scientific'
+    PILOT = 'pilot'
 
     TYPES = {
         SCIENTIFIC: 'scientific',
