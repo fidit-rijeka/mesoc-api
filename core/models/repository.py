@@ -15,7 +15,7 @@ class RepositoryDocument(Model):
     }
 
     id = PositiveIntegerField(primary_key=True)
-    type = IntegerField(choices=TYPES.items())
+    type = CharField(max_length=10, choices=TYPES.items())
     document_title = CharField(max_length=400, validators=(MinLengthValidator(1),))
     processed_at = DateTimeField(auto_now=True)
     impacts = ManyToManyField(
