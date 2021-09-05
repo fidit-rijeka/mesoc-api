@@ -524,6 +524,7 @@ paths:
           schema:
             type: string
             enum:
+              - active
               - processing
               - processed
               - failed
@@ -1124,8 +1125,12 @@ components:
       properties:
         state:
           type: string
+          enum:
+            - processing
+            - failed
+            - processed
+            - dismissed
           example: 'dismissed'
-          description: 'Document state, possible values: `processing`, `failed`, `processed` or `dismissed`.'
     Document:
       type: object
       properties:
@@ -1134,14 +1139,28 @@ components:
           maxLength: 100
           example: 'Necronomicon'
           uniqueItems: true
+        abstract:
+          type: string
+          maxLength: 1000
+          example: 'This is an abstract of a scientific study or a pilot project.'
+        type:
+          type: string
+          enum:
+            - scientific
+            - pilot
+          example: 'scientific'
         uploaded_at:
           type: string
           format: datetime
           example: '2020-12-31T17:08:06.018899Z'
         state:
           type: string
+          enum:
+            - processing
+            - failed
+            - processed
+            - dismissed
           example: 'processing'
-          description: 'Document state, possible values: `processing`, `failed`, `processed` or `dismissed`.'
         language:
           $ref: '#/components/schemas/Language'
         location:
@@ -1150,6 +1169,10 @@ components:
           type: string
           format: url
           example: 'http://api.mesoc.dev/documents/bec0f39a-503d-413e-968f-a289f3420621/heatmap/'
+        impacts:
+          type: string
+          format: url
+          example: 'http://api.mesoc.dev/documents/bec0f39a-503d-413e-968f-a289f3420621/impacts/'
         user:
           type: string
           format: url
@@ -1166,6 +1189,16 @@ components:
           maxLength: 100
           example: 'My document'
           uniqueItems: true
+        abstract:
+          type: string
+          maxLength: 1000
+          example: 'This is an abstract of a scientific study or a pilot project.'
+        type:
+          type: string
+          enum:
+            - scientific
+            - pilot
+          example: 'scientific'
         language:
           type: string
           format: url

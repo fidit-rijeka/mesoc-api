@@ -25,15 +25,11 @@ class BaseDocumentSerializer(HyperlinkedModelSerializer):
     def get_language(self, obj):
         return LanguageSerializer(obj.language, context=self.context).data
 
-    def get_state(self, obj):
-        return Document.STATES[obj.state]
-
     def get_location(self, obj):
         return CitySerializer(obj.location, context=self.context).data
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['state'] = self.get_state(instance)
         representation['language'] = self.get_language(instance)
         representation['location'] = self.get_location(instance)
         return representation
@@ -42,14 +38,16 @@ class BaseDocumentSerializer(HyperlinkedModelSerializer):
 class DocumentSerializer(BaseDocumentSerializer):
     title = CharField(max_length=100, validators=(MinLengthValidator(1),), source='file_title', read_only=True)
     location = HyperlinkedRelatedField(view_name='city-detail', read_only=True)
-    heatmap = SerializerMethodField(read_only=True)
-    impacts = SerializerMethodField(read_only=True)
-    user = SerializerMethodField(read_only=True)
+    heatmap = SerializerMethodField()
+    impacts = SerializerMethodField()
+    user = SerializerMethodField()
 
     class Meta:
         model = Document
         fields = (
             'title',
+            'abstract',
+            'type',
             'uploaded_at',
             'state',
             'language',
@@ -60,29 +58,6 @@ class DocumentSerializer(BaseDocumentSerializer):
             'url',
         )
         read_only_fields = ('uploaded_at', 'language', 'url')
-
-    def to_internal_value(self, data):
-        state = self._to_internal_state(data.get('state', None))
-
-        data = data.copy()  # create mutable copy
-        data['state'] = state
-
-        return super().to_internal_value(data)
-
-    def _to_internal_state(self, value):
-        if not value:
-            raise ValidationError({'state': ['This field is required.'.format(value)]}, code='invalid')
-
-        state = ''
-        for k, v in Document.STATES.items():
-            if value == v:
-                state = str(k)
-                break
-
-        if not state:
-            raise ValidationError({'state': ['"{}" is not a valid choice.'.format(value)]}, code='invalid')
-
-        return state
 
 
 class DocumentUploadSerializer(BaseDocumentSerializer):
@@ -105,6 +80,8 @@ class DocumentUploadSerializer(BaseDocumentSerializer):
         model = Document
         fields = (
             'title',
+            'abstract',
+            'type',
             'uploaded_at',
             'state',
             'language',
