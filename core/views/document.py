@@ -71,7 +71,7 @@ class DocumentViewSet(ModelViewSet):
 
         document_id = response.data['url'].split('/')[-2]
         celery.chain(
-            tasks.convert_to_pdf.s(document_id),
+            tasks.read_contents.si(document_id),
             tasks.extract_keywords.s(),
             tasks.classify_document.s(),
             tasks.extract_impacts.s(document_id),

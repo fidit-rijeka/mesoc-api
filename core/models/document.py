@@ -47,21 +47,34 @@ class Document(Model):
     impacts = ManyToManyField('core.Impact', through='core.DocumentImpact', related_name='documents')
     user = ForeignKey(auth.get_user_model(), on_delete=CASCADE, related_name='documents')
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._contents_cache = None
+
     @property
     def location(self):
         return self.cities.filter(documentcity__primary=True).get()
 
     @property
     def contents(self):
-        with self.file.open() as f:
-            contents = f.read()
-            if magic.from_buffer(contents, True) == 'application/pdf':
-                d = fitz.Document(stream=contents, filetype='application/pdf')
-                contents = '\n'.join(p.get_text() for p in d)
-            else:
-                contents = contents.decode('utf-8')
+        if self.is_pdf:
+            d = fitz.Document(stream=self._raw_contents, filetype='application/pdf')
+            contents = '\n'.join(p.get_text() for p in d)
+        else:
+            contents = self._raw_contents.decode('utf-8')
 
         return contents
+
+    @property
+    def is_pdf(self):
+        return magic.from_buffer(self._raw_contents, True) == 'application/pdf'
+
+    @property
+    def _raw_contents(self):
+        if not self._contents_cache:
+            with self.file.open() as f:
+                self._contents_cache = f.read()
+        return self._contents_cache
 
 
 class DocumentCity(Model):
