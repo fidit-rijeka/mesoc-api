@@ -47,17 +47,18 @@ def send_mail(subject, message, from_, to):
 
 
 @shared_task(base=LoggedTask)
-def convert_to_pdf(document_id):
+def read_contents(document_id):
     document = Document.objects.filter(id=document_id).get()
 
-    entities_processor = nlp.processing.CompoundEntitiesProcessor()
-    stops_processor = nlp.processing.StopsProcessor()
-    min_length_processor = nlp.processing.MinSentenceLengthProcessor(settings.CORE_MIN_SENTENCE_LENGTH)
-    pdf_converter = nlp.pdf_conversion.FitzPDFConverter(
-        post_processors=(entities_processor, stops_processor, min_length_processor)
-    )
+    processors = [
+        nlp.processing.CompoundEntitiesProcessor(),
+        nlp.processing.StopsProcessor(),
+        nlp.processing.MinSentenceLengthProcessor(settings.CORE_MIN_SENTENCE_LENGTH)
+    ]
 
-    text = pdf_converter.convert_to_text(document.file.path)
+    text = document.contents
+    for p in processors:
+        text = p.process(text)
 
     return text
 
