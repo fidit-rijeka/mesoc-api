@@ -677,43 +677,29 @@ paths:
         - DRFToken: []
       tags:
         - documents
-  /cells/{id}/:
+  /documents/{id}/impacts/:
     parameters:
       - name: id
         in: path
         required: true
         schema:
-          type: integer
-    get:
-      operationId: Get heatmap cell
-      description: 'Requires the user to be authenticated and verified.'
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                  $ref: '#/components/schemas/Cell'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HttpError'
-          description: 'Cell with the specified `id` is not associated with the authenticated user or does not exist.'
-      security:
-        - DRFToken: []
-      tags:
-        - documents
-  /cells/{id}/variables/:
-    parameters:
-      - name: id
-        in: path
-        required: true
+          type: string
+          format: 'uuid'
+          pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
+      - name: column
+        in: query
+        required: false
         schema:
           type: integer
+          enum:
+            - 0
+            - 1
+            - 2
     get:
-      operationId: Get heatmap cell variables
-      description: 'Requires the user to be authenticated and verified.'
+      operationId: Get impacts
+      description: 'Get document impacts. Order of columns corresponds to 1x3 matrix in
+      column-major order. Will return empty array if document state is not `processed`.
+      Requires the user to be authenticated and verified.'
       responses:
         '200':
           content:
@@ -721,14 +707,14 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Variable'
+                  $ref: '#/components/schemas/Impact'
           description: ''
         '404':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HttpError'
-          description: 'Cell with the specified `id` is not associated with the authenticated user or does not exist.'
+          description: 'Document with the specified `id` does not belong to the authenticated user or does not exist.'
       security:
         - DRFToken: []
       tags:
@@ -870,10 +856,6 @@ components:
         classification:
           type: number
           example: 0.7
-        variables:
-          type: string
-          format: url
-          example: 'https://api.mesoc.dev/cells/4/variables/'
         similar_documents:
           type: string
           format: url
@@ -1214,26 +1196,6 @@ components:
           format: file
           description: 'Text or PDF file to upload.'
           example: '/home/mulder/proof.pdf'
-    Variable:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 30
-          example: 'sense of socio-cultural belonging'
-        num_ontology_categories:
-          type: integer
-          example: 2
-        num_keyword_vars:
-          type: integer
-          example: 3
-        strength:
-          type: number
-          example: 0.62
-        cell:
-          type: string
-          format: url
-          example: 'http://api.mesoc.dev/cells/4/'
     LocationAggregate:
       type: object
       properties:

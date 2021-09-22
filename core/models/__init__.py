@@ -1,5 +1,5 @@
 from .user import User
-from .cell import Cell, CellVariable
+from .cell import Cell
 from .city import City
 from .country import Country
 from .document import Document, DocumentCity, DocumentImpact, DocumentKeyword
@@ -8,6 +8,5 @@ from .language import Language
 from .repository import (
     RepositoryCell, RepositoryCellKeyword, RepositoryDocument, RepositoryDocumentCity, RepositoryDocumentImpact
 )
-from .variable import Variable
 from .password_reset import PasswordReset
 from .verification import Verification

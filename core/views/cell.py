@@ -11,7 +11,7 @@ from rest_framework.viewsets import GenericViewSet
 
 from ..models import Cell, RepositoryCell
 from ..permissions import IsVerified
-from ..serializers.cell import CellSerializer, CellVariableSerializer
+from ..serializers.cell import CellSerializer
 from ..serializers.repository import SimilarDocumentSerializer
 
 from ..nlp.processing import KeyphraseToKeywordProcessor
@@ -63,9 +63,3 @@ class CellViewSet(RetrieveModelMixin, GenericViewSet):
         )
 
         return Response(data=document_serializer.data, status=HTTP_200_OK)
-
-    @action(methods=('get',), detail=True)
-    def variables(self, request, pk=None):
-        cell_variables = self.get_object().cellvariable_set.all()
-        cvs = CellVariableSerializer(cell_variables, many=True, context={'request': self.request})
-        return Response(data=cvs.data, status=HTTP_200_OK)
