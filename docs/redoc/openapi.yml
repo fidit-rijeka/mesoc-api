@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: 'MESOC REST API'
-  version: '0.7'
+  version: '1.0.0'
 paths:
   /account/:
     get:
@@ -266,7 +266,7 @@ paths:
   /aggregates/impact/:
     get:
       operationId: Get impact aggregate
-      description: 'Get average impact strength.'
+      description: "Get impact aggregate. If exact GPS coordinates are not specified, the response won't contain `similar` key."
       parameters:
         - in: query
           name: type
@@ -284,22 +284,22 @@ paths:
             type: number
             example: 52.520008
           required: false
-          description: "Filter aggregate by latitude."
+          description: "Filter aggregate by latitude. If specified, then longitude must be specified as well."
         - in: query
           name: longitude
           schema:
             type: number
             example: 13.404954
           required: false
-          description: "Filter aggregate by longitude."
+          description: "Filter aggregate by longitude. If specified, then latitude must be specified as well."
         - in: query
           name: column
           schema:
             type: integer
-            example: 0
             minimum: 0
             maximum: 2
-          required: false
+            example: 0
+          required: true
           description: "Filter aggregate by impact column."
       responses:
         '200':
@@ -310,6 +310,14 @@ paths:
                 items:
                   $ref: '#/components/schemas/ImpactAggregate'
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FormError'
+            description: ''
       tags:
         - aggregates
   /aggregates/similar/cell/:
@@ -365,28 +373,36 @@ paths:
       description: 'Get impact similar documents of an aggregate.'
       parameters:
         - in: query
+          name: type
+          schema:
+            type: string
+            enum:
+              - scientific
+              - pilot
+            example: 'scientific'
+          required: false
+          description: "Filter aggregate by document type."
+        - in: query
           name: latitude
           schema:
             type: number
             example: 52.520008
-          required: true
-          description: "Filter aggregate by latitude."
+          required: false
+          description: "Filter aggregate by latitude. If specified, then longitude must be specified as well."
         - in: query
           name: longitude
           schema:
             type: number
             example: 13.404954
-          required: true
-          description: "Filter aggregate by longitude."
+          required: false
+          description: "Filter aggregate by longitude. If specified, then latitude must be specified as well."
         - in: query
-          name: column
+          name: impact
           schema:
             type: integer
-            minimum: 0
-            maximum: 2
-            example: 0
+            example: 2
           required: true
-          description: "Filter aggregate by impact column. This parameters corresponds to the index of a 1x3 matrix in column-major order with the top left element having index of 0."
+          description: "Filter aggregate by impact id."
       responses:
         '200':
           content:
@@ -1258,6 +1274,10 @@ components:
         keywords:
           type: array
           example: ['sense increased', 'increased civic']
+        similar:
+          type: string
+          format: url
+          example: 'http://api.mesoc.dev/aggregates/similar/impact/?latitude=45.3430600000000000&longitude=14.4091700000000000&impact=2'
 
   securitySchemes:
     DRFToken:

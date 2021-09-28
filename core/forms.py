@@ -1,7 +1,7 @@
-from django.core.validators import MinValueValidator, MaxValueValidator
-from django.forms import DecimalField, Form, IntegerField
+from django.core.validators import MinValueValidator, MaxValueValidator, ValidationError
+from django.forms import ChoiceField, DecimalField, Form, IntegerField, ModelChoiceField
 
-from .models import City
+from .models import City, Impact, RepositoryDocument
 
 
 class AggregateCellSimilarityForm(Form):
@@ -23,38 +23,54 @@ class AggregateCellSimilarityForm(Form):
 
 
 class AggregateImpactForm(Form):
-    column = IntegerField(validators=(MinValueValidator(0), MaxValueValidator(2)), required=False)
+    type = ChoiceField(choices=RepositoryDocument.TYPES.items(), required=False)
     longitude = DecimalField(max_digits=22, decimal_places=16, required=False)
     latitude = DecimalField(max_digits=22, decimal_places=16, required=False)
+    column = IntegerField(min_value=0, max_value=2)
 
     def clean_longitude(self):
-        if self.cleaned_data['longitude']:
-            if not City.objects.filter(longitude=self.cleaned_data['longitude']).exists():
-                self.add_error('longitude', 'Invalid longitude value.')
+        longitude = self.cleaned_data.get('longitude', None)
+        if longitude and not City.objects.filter(longitude=longitude).exists():
+            self.add_error('longitude', 'Invalid longitude value.')
 
-            return self.cleaned_data['longitude']
+        return longitude
 
     def clean_latitude(self):
-        if self.cleaned_data['latitude']:
-            if not City.objects.filter(latitude=self.cleaned_data['latitude']).exists():
-                self.add_error('latitude', 'Invalid latitude value.')
+        latitude = self.cleaned_data.get('latitude', None)
+        if latitude and not City.objects.filter(latitude=latitude).exists():
+            self.add_error('latitude', 'Invalid latitude value.')
 
-            return self.cleaned_data['latitude']
+        return latitude
+
+    def clean(self):
+        cleaned_data = super().clean()
+        longitude = cleaned_data['longitude']
+        latitude = cleaned_data['latitude']
+        if longitude and latitude is None:
+            self.add_error('latitude', 'latitude must be specified along with longitude.')
+        
+        if latitude and longitude is None:
+            self.add_error('longitude', 'longitude must be specified along with latitude.')
+
+        return cleaned_data
 
 
 class AggregateImpactSimilarityForm(Form):
-    column = IntegerField(validators=(MinValueValidator(0), MaxValueValidator(2)))
+    type = ChoiceField(choices=RepositoryDocument.TYPES.items(), required=False)
     longitude = DecimalField(max_digits=22, decimal_places=16)
     latitude = DecimalField(max_digits=22, decimal_places=16)
+    impact = ModelChoiceField(queryset=Impact.objects.all())
 
     def clean_longitude(self):
-        if not City.objects.filter(longitude=self.cleaned_data['longitude']).exists():
+        longitude = self.cleaned_data['longitude']
+        if not City.objects.filter(longitude=longitude).exists():
             self.add_error('longitude', 'Invalid longitude value.')
 
-        return self.cleaned_data['longitude']
+        return longitude
 
     def clean_latitude(self):
-        if not City.objects.filter(latitude=self.cleaned_data['latitude']).exists():
+        latitude = self.cleaned_data['latitude']
+        if not City.objects.filter(latitude=latitude).exists():
             self.add_error('latitude', 'Invalid latitude value.')
 
-        return self.cleaned_data['latitude']
+        return latitude
