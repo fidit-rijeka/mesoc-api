@@ -4,6 +4,7 @@ import decimal
 from django.conf import settings
 from django.db.models import Avg, Count
 
+from rest_framework.reverse import reverse
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView, Response
 
@@ -141,50 +142,23 @@ class AggregateImpactView(APIView):
         form = self.form_class(request.query_params)
 
         if form.is_valid():
-            aggregate = RepositoryDocumentImpact.objects.select_related('document').select_related('impact')
-            aggregate = aggregate.prefetch_related('keywords')
-
-            column = form.cleaned_data.get('column')
-            aggregate = aggregate.filter(impact__column=column) if column in range(0, 3) else aggregate
-
-            type_ = getattr(RepositoryDocument, form.cleaned_data.get('type', '').upper(), '')
-            aggregate = aggregate.filter(document__type=type_) if type_ else aggregate
-
-            latitude = form.data.get('latitude', '')
-            longitude = form.data.get('longitude', '')
-            aggregate = aggregate.filter(document__cities__latitude=latitude) if latitude else aggregate
-            aggregate = aggregate.filter(document__cities__longitude=longitude) if longitude else aggregate
-
-            aggregate_values = aggregate.values('impact__id', 'impact__column', 'impact__value').distinct()
-            aggregate_values = aggregate_values.annotate(avg_strength=Avg('strength'))
-
-            Through = RepositoryDocumentImpact.keywords.through
-            keywords = Through.objects.filter(
-                repositorydocumentimpact__id__in=aggregate.values('id')
+            aggregate = RepositoryDocumentImpact.objects.get_aggregate(
+                form.cleaned_data['column'],
+                form.cleaned_data['latitude'],
+                form.cleaned_data['longitude'],
+                form.cleaned_data['type']
             )
-            keywords = keywords.select_related('repositorydocumentimpact')
-            keywords = keywords.select_related('repositorydocumentimpact__impact')
-            keywords = keywords.select_related('impactkeyword')
 
-            impact_keywords = {}
-            for kw in keywords:
-                try:
-                    impact_keywords[kw.repositorydocumentimpact.impact.value].add(kw.impactkeyword.value)
-                except KeyError:
-                    impact_keywords[kw.repositorydocumentimpact.impact.value] = set([kw.impactkeyword.value])
+            if form.cleaned_data['latitude'] and form.cleaned_data['longitude']:
+                for a in aggregate:
+                    a['similar'] = '{}?latitude={}&longitude={}&impact={}'.format(
+                        reverse('aggregate-impact-similar', request=request),
+                        form.cleaned_data['longitude'],
+                        form.cleaned_data['latitude'],
+                        a.pop('impact_id')
+                    )
 
-            impacts = sorted(
-                aggregate_values, key=lambda x: x['avg_strength'], reverse=True
-            )[:settings.CORE_NUM_SIMILAR_DOCUMENTS]
-
-            data = [
-                {
-                    'impact': i['impact__value'],
-                    'column': i['impact__column'],
-                    'strength': i['avg_strength'],
-                    'keywords': impact_keywords[i['impact__value']]
-                } for i in impacts
-            ]
+            data = sorted(aggregate, key=lambda x: x['strength'], reverse=True)[:settings.CORE_NUM_SIMILAR_DOCUMENTS]
             status = HTTP_200_OK
         else:
             status = HTTP_400_BAD_REQUEST
@@ -200,28 +174,30 @@ class AggregateImpactSimilarityView(APIView):
         form = self.form_class(request.query_params)
 
         if form.is_valid():
-            aggregate = RepositoryDocumentImpact.objects.select_related('document').select_related('impact')
-            aggregate = aggregate.prefetch_related('keywords')
+            impact = form.cleaned_data['impact']
+            latitude = form.cleaned_data['latitude']
+            longitude = form.cleaned_data['longitude']
+            type_ = form.cleaned_data['type']
 
-            type_ = getattr(RepositoryDocument, form.data.get('type', '').upper(), '')
-            latitude = form.data.get('latitude', '')
-            longitude = form.data.get('longitude', '')
-            aggregate = aggregate.filter(impact__column=form.data.get('column'))
-            aggregate = aggregate.filter(document__type=type_) if type_ else aggregate
-            aggregate = aggregate.filter(document__cities__latitude=latitude) if latitude else aggregate
-            aggregate = aggregate.filter(document__cities__longitude=longitude) if longitude else aggregate
+            aggregate_keywords = RepositoryDocumentImpact.objects.get_aggregate_keywords(
+                impact,
+                latitude,
+                longitude,
+                type_
+            )
 
             processor = keyword_processing.KeyphraseToKeywordProcessor()
-            aggregate_keywords = aggregate.values_list('keywords__value', flat=True)
             aggregate_keywords = set(processor.process(aggregate_keywords))
 
             if aggregate_keywords:
                 impacts = RepositoryDocumentImpact.objects.filter(
-                    impact__column=form.cleaned_data['column'],
+                    impact=form.cleaned_data['impact'],
                 ).exclude(
                     document__cities__longitude=form.cleaned_data['longitude'],
                     document__cities__latitude=form.cleaned_data['latitude']
                 ).select_related('document').prefetch_related('keywords')
+
+                impacts = impacts.filter(document__type=type_) if type_ else impacts
 
                 top = []
                 for impact in impacts:
