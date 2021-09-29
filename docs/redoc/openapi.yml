@@ -397,14 +397,14 @@ paths:
           schema:
             type: number
             example: 52.520008
-          required: false
+          required: true
           description: "Filter aggregate by latitude. If specified, then longitude must be specified as well."
         - in: query
           name: longitude
           schema:
             type: number
             example: 13.404954
-          required: false
+          required: true
           description: "Filter aggregate by longitude. If specified, then latitude must be specified as well."
         - in: query
           name: impact
