@@ -3,16 +3,17 @@ import celery
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.status import HTTP_200_OK
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from rest_framework.viewsets import ModelViewSet
 
 
 from .. import tasks
+from ..forms import DocumentImpactsForm
 from ..models import Document
 from ..permissions import IsVerified
 from ..serializers.cell import CellSerializer
 from ..serializers.document import DocumentUploadSerializer, DocumentSerializer
-from core.serializers.impact import DocumentImpactSerializer
+from ..serializers.impact import DocumentImpactSerializer
 
 
 class DocumentViewSet(ModelViewSet):
@@ -47,19 +48,22 @@ class DocumentViewSet(ModelViewSet):
         )
 
     @action(methods=('get',), detail=True)
-    def impacts(self, request, pk=None,):
-        try:
-            column = int(request.query_params.get('column', -1))
-        except ValueError:
-            column = -1
+    def impacts(self, request, pk=None):
+        form = DocumentImpactsForm(request.query_params)
 
-        document = self.get_object()
-        impacts = document.document_impacts.prefetch_related('keywords')
-        impacts = impacts.filter(impact__column=column) if column in range(0, 3) else impacts.all()
+        if form.is_valid():
+            document = self.get_object()
+            impacts = document.document_impacts.prefetch_related('keywords')
+            impacts = impacts.filter(impact__column=form.cleaned_data['column'])
+            status = HTTP_200_OK
+            data = DocumentImpactSerializer(impacts, many=True, context={'request': self.request}).data
+        else:
+            data = form.errors
+            status = HTTP_400_BAD_REQUEST
 
         return Response(
-            status=HTTP_200_OK,
-            data=DocumentImpactSerializer(impacts, many=True, context={'request': self.request}).data
+            status=status,
+            data=data
         )
 
     def get_serializer(self, *args, **kwargs):

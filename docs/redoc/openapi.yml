@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: 'MESOC REST API'
-  version: '1.0.0'
+  version: '0.9.0'
 paths:
   /account/:
     get:
@@ -226,7 +226,8 @@ paths:
   /aggregates/heatmap/:
     get:
       operationId: Get heatmap aggregate
-      description: 'Get average classification by cell.'
+      description: "Get average classification by cell. If exact GPS coordinates are not specified, the response won't
+      contain `similar_documents` key."
       parameters:
         - in: query
           name: type
@@ -244,14 +245,14 @@ paths:
             type: number
             example: 52.520008
           required: false
-          description: "Filter aggregate by latitude."
+          description: "Filter aggregate by latitude. If specified, then longitude must be specified as well."
         - in: query
           name: longitude
           schema:
             type: number
             example: 13.404954
           required: false
-          description: "Filter aggregate by longitude."
+          description: "Filter aggregate by longitude. If specified, then latitude must be specified as well."
       responses:
         '200':
           content:
@@ -261,12 +262,21 @@ paths:
                 items:
                   $ref: '#/components/schemas/HeatmapAggregate'
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FormError'
+          description: ''
       tags:
         - aggregates
   /aggregates/impact/:
     get:
       operationId: Get impact aggregate
-      description: "Get impact aggregate. If exact GPS coordinates are not specified, the response won't contain `similar` key."
+      description: "Get impact aggregate. If exact GPS coordinates are not specified, the response won't contain
+      `similar_documents` key."
       parameters:
         - in: query
           name: type
@@ -671,7 +681,7 @@ paths:
           pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
     get:
       operationId: Get heatmap
-      description: 'Get individual cells comprising document heatmap. Order of cells corresponds to 3x10 matrix in
+      description: 'Get individual cells comprising document heatmap. Cell index corresponds to 3x10 matrix in
       column-major order. Will return empty array if document state is not `processed`.
       Requires the user to be authenticated and verified.'
       responses:
@@ -704,16 +714,14 @@ paths:
           pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
       - name: column
         in: query
-        required: false
+        required: true
         schema:
           type: integer
-          enum:
-            - 0
-            - 1
-            - 2
+          minimum: 0
+          maximum: 2
     get:
       operationId: Get impacts
-      description: 'Get document impacts. Order of columns corresponds to 1x3 matrix in
+      description: 'Get document impacts. `column` parameter corresponds to index of a 1x3 matrix in
       column-major order. Will return empty array if document state is not `processed`.
       Requires the user to be authenticated and verified.'
       responses:
@@ -866,8 +874,10 @@ components:
     Cell:
       type: object
       properties:
-        order:
+        cell:
           type: integer
+          minimum: 0
+          maximum: 29
           example: 5
         classification:
           type: number
@@ -903,7 +913,7 @@ components:
         keywords:
           type: array
           example: ['sense increased', 'increased civic']
-        similar:
+        similar_documents:
           type: string
           format: url
           example: 'https://api.mesoc.dev/impacts/4/similar/'
@@ -1249,12 +1259,16 @@ components:
     HeatmapAggregate:
       type: object
       properties:
-        order:
+        cell:
           type: integer
           example: 5
         classification:
           type: number
           example: 0.7
+        similar_documents:
+          type: string
+          format: url
+          example: 'http://api.mesoc.dev/aggregates/similar/cell/?latitude=45.3430600000000000&longitude=14.4091700000000000&cell=2'
     ImpactAggregate:
       type: object
       properties:
@@ -1274,7 +1288,7 @@ components:
         keywords:
           type: array
           example: ['sense increased', 'increased civic']
-        similar:
+        similar_documents:
           type: string
           format: url
           example: 'http://api.mesoc.dev/aggregates/similar/impact/?latitude=45.3430600000000000&longitude=14.4091700000000000&impact=2'

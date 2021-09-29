@@ -1,10 +1,43 @@
-from django.core.validators import MinValueValidator, MaxValueValidator, ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.forms import ChoiceField, DecimalField, Form, IntegerField, ModelChoiceField
 
 from .models import City, Impact, RepositoryDocument
 
 
+class AggregateHeatmapForm(Form):
+    type = ChoiceField(choices=RepositoryDocument.TYPES.items(), required=False)
+    longitude = DecimalField(max_digits=22, decimal_places=16, required=False)
+    latitude = DecimalField(max_digits=22, decimal_places=16, required=False)
+
+    def clean_longitude(self):
+        longitude = self.cleaned_data.get('longitude', None)
+        if longitude is not None and not City.objects.filter(longitude=longitude).exists():
+            self.add_error('longitude', 'Invalid longitude value.')
+
+        return longitude
+
+    def clean_latitude(self):
+        latitude = self.cleaned_data.get('latitude', None)
+        if latitude is not None and not City.objects.filter(latitude=latitude).exists():
+            self.add_error('latitude', 'Invalid latitude value.')
+
+        return latitude
+
+    def clean(self):
+        cleaned_data = super().clean()
+        longitude = cleaned_data['longitude']
+        latitude = cleaned_data['latitude']
+        if longitude and latitude is None:
+            self.add_error('latitude', 'latitude must be specified along with longitude.')
+
+        if latitude and longitude is None:
+            self.add_error('longitude', 'longitude must be specified along with latitude.')
+
+        return cleaned_data
+
+
 class AggregateCellSimilarityForm(Form):
+    type = ChoiceField(choices=RepositoryDocument.TYPES.items(), required=False)
     cell = IntegerField(validators=(MinValueValidator(0), MaxValueValidator(29)))
     longitude = DecimalField(max_digits=22, decimal_places=16)
     latitude = DecimalField(max_digits=22, decimal_places=16)
@@ -30,14 +63,14 @@ class AggregateImpactForm(Form):
 
     def clean_longitude(self):
         longitude = self.cleaned_data.get('longitude', None)
-        if longitude and not City.objects.filter(longitude=longitude).exists():
+        if longitude is not None and not City.objects.filter(longitude=longitude).exists():
             self.add_error('longitude', 'Invalid longitude value.')
 
         return longitude
 
     def clean_latitude(self):
         latitude = self.cleaned_data.get('latitude', None)
-        if latitude and not City.objects.filter(latitude=latitude).exists():
+        if latitude is not None and not City.objects.filter(latitude=latitude).exists():
             self.add_error('latitude', 'Invalid latitude value.')
 
         return latitude
@@ -74,3 +107,7 @@ class AggregateImpactSimilarityForm(Form):
             self.add_error('latitude', 'Invalid latitude value.')
 
         return latitude
+
+
+class DocumentImpactsForm(Form):
+    column = IntegerField(min_value=0, max_value=2)
