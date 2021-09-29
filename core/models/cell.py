@@ -4,10 +4,10 @@ from django.db.models import CASCADE, FloatField, ForeignKey, IntegerField, Mode
 
 class Cell(Model):
     class Meta:
-        unique_together = ('document', 'order')
+        unique_together = ('document', 'cell')
 
     classification = FloatField(validators=(MaxValueValidator(1.0), MinValueValidator(0.0)))
-    order = IntegerField(validators=(MinValueValidator(0), MaxValueValidator(29)))
+    cell = IntegerField(validators=(MinValueValidator(0), MaxValueValidator(29)))
     document = ForeignKey('core.Document', CASCADE, 'cells')
 
     @property

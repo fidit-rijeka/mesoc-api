@@ -1,8 +1,7 @@
 import collections
-import decimal
 
 from django.conf import settings
-from django.db.models import Avg, Count
+from django.db.models import Count
 
 from rest_framework.reverse import reverse
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
@@ -10,10 +9,13 @@ from rest_framework.views import APIView, Response
 
 import nltk
 
-from ..forms import AggregateCellSimilarityForm, AggregateImpactForm, AggregateImpactSimilarityForm
+from ..forms import (
+    AggregateCellSimilarityForm, AggregateHeatmapForm, AggregateImpactForm, AggregateImpactSimilarityForm
+)
 from ..models import (
     City, RepositoryCell, RepositoryCellKeyword, RepositoryDocument, RepositoryDocumentCity, RepositoryDocumentImpact
 )
+
 from ..serializers.city import CitySerializer
 from ..serializers.repository import SimilarDocumentSerializer
 
@@ -61,27 +63,33 @@ class AggregateLocationView(APIView):
 
 
 class AggregateHeatmapView(APIView):
+    form_class = AggregateHeatmapForm
+
     def get(self, request):
-        aggregate = RepositoryCell.objects.select_related('city').select_related('document')
+        form = self.form_class(request.query_params)
 
-        try:
-            latitude = decimal.Decimal(request.query_params.get('latitude', ''))
-        except decimal.InvalidOperation:
-            latitude = None
+        if form.is_valid():
+            type_ = form.cleaned_data.get('type', '')
+            latitude = form.cleaned_data.get('latitude')
+            longitude = form.cleaned_data.get('longitude')
 
-        try:
-            longitude = decimal.Decimal(request.query_params.get('longitude', ''))
-        except decimal.InvalidOperation:
-            longitude = None
+            aggregate = RepositoryCell.objects.get_aggregate(latitude, longitude, type_)
+            if latitude and longitude:
+                for a in aggregate:
+                    a['similar_documents'] = '{}?latitude={}&longitude={}&cell={}'.format(
+                        reverse('aggregate-cell-similar', request=request),
+                        latitude,
+                        longitude,
+                        a['cell']
+                    )
 
-        type_ = getattr(RepositoryDocument, request.query_params.get('type', '').upper(), '')
-        aggregate = aggregate.filter(document__type=type_) if type_ else aggregate
-        aggregate = aggregate.filter(document__cities__latitude=latitude) if latitude else aggregate
-        aggregate = aggregate.filter(document__cities__longitude=longitude) if longitude else aggregate
+            status = HTTP_200_OK
+            data = aggregate
+        else:
+            status = HTTP_400_BAD_REQUEST
+            data = form.errors
 
-        aggregate = aggregate.values('order').annotate(classification=Avg('classification'))
-
-        return Response(data=aggregate, status=HTTP_200_OK)
+        return Response(data=data, status=status)
 
 
 class AggregateCellSimilarityView(APIView):
@@ -90,12 +98,13 @@ class AggregateCellSimilarityView(APIView):
     def get(self, request, *ags, **kwargs):
         form = self.form_class(request.query_params)
         if form.is_valid():
+            type_ = form.cleaned_data.get('type', '')
+            cell = form.cleaned_data['cell']
+            latitude = form.cleaned_data['latitude']
+            longitude = form.cleaned_data['longitude']
+
+            agg_keywords = RepositoryCellKeyword.objects.get_aggregate_keywords(cell, latitude, longitude, type_)
             processor = KeyphraseToKeywordProcessor()
-            agg_keywords = RepositoryCellKeyword.objects.filter(
-                cell__order=form.cleaned_data['cell'],
-                cell__document__cities__longitude=form.cleaned_data['longitude'],
-                cell__document__cities__latitude=form.cleaned_data['latitude']
-            ).values_list('value', flat=True)
             agg_keywords = set(processor.process(agg_keywords))
 
             if agg_keywords:
@@ -149,13 +158,14 @@ class AggregateImpactView(APIView):
                 form.cleaned_data['type']
             )
 
-            if form.cleaned_data['latitude'] and form.cleaned_data['longitude']:
-                for a in aggregate:
-                    a['similar'] = '{}?latitude={}&longitude={}&impact={}'.format(
+            for a in aggregate:
+                impact_id = a.pop('impact_id')
+                if form.cleaned_data['latitude'] and form.cleaned_data['longitude']:
+                    a['similar_documents'] = '{}?latitude={}&longitude={}&impact={}'.format(
                         reverse('aggregate-impact-similar', request=request),
                         form.cleaned_data['longitude'],
                         form.cleaned_data['latitude'],
-                        a.pop('impact_id')
+                        impact_id
                     )
 
             data = sorted(aggregate, key=lambda x: x['strength'], reverse=True)[:settings.CORE_NUM_SIMILAR_DOCUMENTS]

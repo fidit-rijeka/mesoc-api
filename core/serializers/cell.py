@@ -9,7 +9,7 @@ class CellSerializer(HyperlinkedModelSerializer):
 
     class Meta:
         model = Cell
-        fields = ('order', 'classification', 'similar_documents', 'document', 'url')
+        fields = ('cell', 'classification', 'similar_documents', 'document', 'url')
 
     def get_similar_documents(self, obj):
         return reverse('cell-similar', args=(obj.pk,), request=self.context['request'])
