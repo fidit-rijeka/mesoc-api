@@ -25,8 +25,8 @@ class AggregateHeatmapForm(Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        longitude = cleaned_data['longitude']
-        latitude = cleaned_data['latitude']
+        longitude = cleaned_data.get('longitude', None)
+        latitude = cleaned_data.get('latitude', None)
         if longitude and latitude is None:
             self.add_error('latitude', 'latitude must be specified along with longitude.')
 
@@ -77,8 +77,8 @@ class AggregateImpactForm(Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        longitude = cleaned_data['longitude']
-        latitude = cleaned_data['latitude']
+        longitude = cleaned_data.get('longitude', None)
+        latitude = cleaned_data.get('latitude', None)
         if longitude and latitude is None:
             self.add_error('latitude', 'latitude must be specified along with longitude.')
         

@@ -15,7 +15,7 @@ class DocumentImpactSerializer(HyperlinkedModelSerializer):
     impact = CharField(max_length=100, read_only=True, source='impact.value')
     column = IntegerField(read_only=True, source='impact.column')
     keywords = SerializerMethodField()
-    similar = SerializerMethodField()
+    similar_documents = SerializerMethodField()
 
     class Meta:
         model = DocumentImpact
@@ -24,7 +24,7 @@ class DocumentImpactSerializer(HyperlinkedModelSerializer):
             'column',
             'strength',
             'keywords',
-            'similar',
+            'similar_documents',
             'document',
             'url'
         )
@@ -33,5 +33,5 @@ class DocumentImpactSerializer(HyperlinkedModelSerializer):
     def get_keywords(self, obj):
         return obj.keywords.values_list('value', flat=True)
 
-    def get_similar(self, obj):
+    def get_similar_documents(self, obj):
         return reverse('documentimpact-similar', args=(obj.pk,), request=self.context['request'])

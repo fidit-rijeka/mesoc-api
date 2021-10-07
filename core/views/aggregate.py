@@ -109,7 +109,7 @@ class AggregateCellSimilarityView(APIView):
 
             if agg_keywords:
                 cells = RepositoryCell.objects.filter(
-                    order=form.cleaned_data['cell'],
+                    cell=form.cleaned_data['cell'],
                 ).exclude(
                     document__cities__longitude=form.cleaned_data['longitude'],
                     document__cities__latitude=form.cleaned_data['latitude']
@@ -163,8 +163,8 @@ class AggregateImpactView(APIView):
                 if form.cleaned_data['latitude'] and form.cleaned_data['longitude']:
                     a['similar_documents'] = '{}?latitude={}&longitude={}&impact={}'.format(
                         reverse('aggregate-impact-similar', request=request),
-                        form.cleaned_data['longitude'],
                         form.cleaned_data['latitude'],
+                        form.cleaned_data['longitude'],
                         impact_id
                     )
 
