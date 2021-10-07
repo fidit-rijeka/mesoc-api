@@ -32,7 +32,7 @@ class CellViewSet(RetrieveModelMixin, GenericViewSet):
         document_city = document_cell.document.cities.filter(documentcity__primary=True).get()
 
         cells = RepositoryCell.objects.filter(
-            order=document_cell.cell,
+            cell=document_cell.cell,
         ).exclude(
             document__cities__longitude=document_city.longitude,
             document__cities__latitude=document_city.latitude,

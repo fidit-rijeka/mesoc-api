@@ -18,7 +18,7 @@ class RepositoryCellManager(Manager):
 
 
 class RepositoryCellKeywordManager(Manager):
-    def get_aggregate_keywords(self, cell=None, longitude=None, latitude=None, type_=None):
+    def get_aggregate_keywords(self, cell=None, latitude=None, longitude=None, type_=None):
         aggregate = self.filter(cell__cell=cell) if cell is not None else self
         aggregate = aggregate.filter(cell__document__cities__latitude=latitude) if latitude is not None else aggregate
         aggregate = aggregate.filter(cell__document__cities__longitude=longitude) if longitude is not None else aggregate
