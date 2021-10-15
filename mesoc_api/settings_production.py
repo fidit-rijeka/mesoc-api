@@ -240,3 +240,40 @@ CORE_IMPACT_SIMILARITY_THRESHOLD = 0.005
 CORE_NUM_SIMILAR_DOCUMENTS = 10
 
 CORE_REPOSITORY_PREVIEW_URL = 'http://mesoc-doc.uniri.hr'
+
+# Google Cloud
+
+CORE_GOOGLE_CLOUD_CREDENTIALS = {
+    "type": "service_account",
+    "project_id": "mesoc-machine-translation",
+    "private_key_id": "a5f4968af05903b090d2aac8033da8b7e7cddcf6",
+    "private_key": (
+        "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC36m/1vLhUMgUD\nBX1"
+        "3vUkJAxUvXG2+znEKpYl6KKChrrool1i9ryWjEmnYL03S55XQeJ+aAtaGQnex\nRRy6M39tT6aDwfNUCD4vaxk1Z/3Y1ch+VFk"
+        "UUl+x4s20ubgYngWAtaAJxNMKYhrh\nofjZyy3hbHZiQ4HNp9aoMlAoKwuMP993NRJ+KKOxrg5q4VR3B7lqGIXgCbhAnSbI\ni"
+        "qfKfm/9S0motYB+GXAxFBXvzzia6BM4E+VvyF8AKAB8cI/y6QnQwyEBJg9l1B9K\nOkLZZpuEXezRm9h5GAx46+5yCKT7NbL4z"
+        "FhVoJHDvXPX5ONJtKCHfbUPGq5QoifG\n5MFa67m9AgMBAAECggEALI9GAhVv2aJm2XUOkaDQXbkb/GYaBuVQuSIjXXATfyjs"
+        "\n3KHSs96IMWroLyNC6UsH3sMi9Dckz9Gx20bh73FDufHW58xpjp4Spv19VZW1CMC/\nO3BnRsewfNJ1QYjPxFMhBS68MDG6ai"
+        "Ub2zgZqXcTTi8vvZ4aiH/WP9k0146aVSfJ\nYPCsoYm+7AI5MONE88s/huOpfJCEDnMNaIA3fNvhyvBrrt9bdkqC1bZAFtLdbc"
+        "kq\nG+FLCp+DgD5LpjHYefey3KbO8cZn2x+rFYYBVbRkuaMq9CDnhseZQyrlFBr8a8cC\nQnb2Y75DbKHZUCg/43HpA+bXbkTX"
+        "18CSmtbnAHRMcQKBgQDgo3QepfiibdsZNEC8\nhuyy+zXPu1kpIuNvOtn5PutB+ECxMyeaj34u+jkoUgQiDhsvorMofXWUT451"
+        "LqH8\n16TQp0qvry+I4p5buYxQCgvGBRA/YtCS2u7q4nptLNYFFhX6gKP2s+vECSyhApLx\nVnyVK5eWw6A/rIyiZkn2wRtMmQ"
+        "KBgQDRl49NZrIW45phi9fSztVtb+gEjRUWqG7a\n1BhEw8WRZrc3Z88sKLItxmyOp3F93j/V5yT1FhLx50xkWjBlDDiwwKXTZD"
+        "18d8Ev\n9hJvDdmIgQ3vnE9YKehqQ2b7KfdHCkFHYQbK6nbd2lav3RcQtWJ0fxKBjxEu5C4e\nOjuwEM0IxQKBgFQKEnkc0oXB"
+        "34PwXn+pYogbHyiWCGcxXDDSrZVnio/llh406w4R\nvL1Kc3O4Kz+qU1Vg4vG07fYMRVlllsiGzGwbCf/r5DarwV7DbdDL0VfF"
+        "sSxlhW5L\nZbKOBAswCOliN9q9oZm7+eofHIkn811CY91Sr6WBjkQEA6EF74nW+KWRAoGBANEd\nkpD7YbyMoj+pM1DVpQRnnu"
+        "rLiLrumowjCYOygLCt9yeEn6PDhuM9EprSXd3jnXVi\nBfGycHyC9ik6AwcOxpEz5T+gx+gj49Bih8nd26jienETV+bzCTzcuy"
+        "blnB55EOCS\n4iAbBzYa3lrhEF5PW0g4cNJrWA2dBJaMK3ljie6xAoGBAJWwKWDKWFMo84RRz7cr\n93+K8lffux++8MkTa+tr"
+        "vowtByOmVgXL8bedbEny/Aj7pbWIBQRaOx+NDpuBhOZQ\nqb8Mf9L0hb7sg3ZOK3Yfvmriz4Gqx9v1gtmixArtIOoWFobpnOKf"
+        "xP34fvBgMJLF\n9tyE2cJMOKUq3tg8aPaTG1G8\n-----END PRIVATE KEY-----\n"
+    ),
+    "client_email": "machine-translation-service@mesoc-machine-translation.iam.gserviceaccount.com",
+    "client_id": "100302473730419688563",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": (
+        "https://www.googleapis.com/robot/v1/metadata/x509/machine-translation-service%40mesoc-machine-translation.iam."
+        "gserviceaccount.com"
+    )
+}

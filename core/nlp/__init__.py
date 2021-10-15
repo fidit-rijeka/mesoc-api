@@ -1,1 +1,1 @@
-from . import classification, keyword_extraction, language_detection, processing
+from . import classification, keyword_extraction, language, processing
