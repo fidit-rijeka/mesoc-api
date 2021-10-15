@@ -136,7 +136,7 @@ def commit_results(results, document_id):
     cells = []
     nonzero = heatmap.nonzero()[0]
     for index in nonzero:
-        cell = Cell(classification=heatmap[index], order=index, document=document)
+        cell = Cell(classification=heatmap[index], cell=index, document=document)
         cells.append(cell)
 
     document_keywords = []
