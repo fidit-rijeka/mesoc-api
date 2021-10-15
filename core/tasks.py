@@ -1,9 +1,8 @@
-import logging
 import pickle
 
 import numpy
+import celery
 
-from celery import shared_task, Task
 from django.conf import settings
 from django.core import mail
 from django.template.loader import render_to_string
@@ -15,16 +14,16 @@ from .nlp.processing.text_processing import (
     StopsProcessor, MinSentenceLengthProcessor, PunctuationProcessor, DigitProcessor
 )
 
-logger = logging.getLogger(__name__)
+logger = celery.utils.log.get_task_logger(__name__)
 
 
-class LoggedTask(Task):
+class LoggedTask(celery.Task):
     def on_failure(self, exc, task_id, args, kwargs, einfo):
         logger.error('An error occured while executing task {}'.format(task_id))
         logger.error(exc)
 
 
-@shared_task
+@celery.shared_task
 def fail_document(document_id):
     document = Document.objects.filter(id=document_id).get()
     document.state = document.FAILED
@@ -41,12 +40,12 @@ def fail_document(document_id):
     )
 
 
-@shared_task(base=LoggedTask)
+@celery.shared_task(base=LoggedTask)
 def send_mail(subject, message, from_, to):
     mail.send_mail(subject, message, from_, to)
 
 
-@shared_task(base=LoggedTask)
+@celery.shared_task(base=LoggedTask)
 def read_contents(document_id):
     document = Document.objects.filter(id=document_id).get()
 
@@ -63,7 +62,18 @@ def read_contents(document_id):
     return text
 
 
-@shared_task(base=LoggedTask)
+@celery.shared_task(base=LoggedTask)
+def translate(text):
+    gt = nlp.language.GoogleTranslator()
+    lang = gt.detect(text)
+    logger.debug('Detected language: {}'.format(lang))
+    if lang != 'en':
+        text = gt.translate(text)
+
+    return text
+
+
+@celery.shared_task(base=LoggedTask)
 def extract_keywords(text):
     extractor = nlp.keyword_extraction.YAKEKeywordExtractor(
         settings.CORE_NUM_KEYWORDS,
@@ -77,7 +87,7 @@ def extract_keywords(text):
     return keywords
 
 
-@shared_task(base=LoggedTask)
+@celery.shared_task(base=LoggedTask)
 def classify_document(keywords):
     with open(settings.CORE_CRP_ROW_MODEL, 'rb') as f:
         row_model = pickle.load(f)
@@ -101,7 +111,7 @@ def classify_document(keywords):
     return keywords, classifier.classify_keywords(keywords)
 
 
-@shared_task(base=LoggedTask)
+@celery.shared_task(base=LoggedTask)
 def extract_impacts(results, document_id):
     impacts = Impact.objects.values_list('lemma', 'keywords__value')
     impact_map = {}
@@ -126,7 +136,7 @@ def extract_impacts(results, document_id):
     return (*results, impacts)
 
 
-@shared_task(base=LoggedTask)
+@celery.shared_task(base=LoggedTask)
 def commit_results(results, document_id):
     keywords = results[0]
     heatmap = numpy.array(results[1]).reshape(-1, order='F')  # reorder so we get column-major indices
@@ -172,7 +182,7 @@ def commit_results(results, document_id):
     document.save()
 
 
-@shared_task(base=LoggedTask)
+@celery.shared_task(base=LoggedTask)
 def mail_results(document_id):
     document = Document.objects.filter(id=document_id).select_related('user').get()
 
