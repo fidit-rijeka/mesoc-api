@@ -9,54 +9,55 @@ from rest_framework.views import APIView, Response
 
 import nltk
 
-from ..forms import (
+from core.forms import (
     AggregateCellSimilarityForm, AggregateHeatmapForm, AggregateImpactForm, AggregateImpactSimilarityForm
 )
-from ..models import (
-    City, RepositoryCell, RepositoryCellKeyword, RepositoryDocument, RepositoryDocumentCity, RepositoryDocumentImpact
+from core.models import (
+    RepositoryCell, RepositoryCellKeyword, RepositoryDocument, RepositoryDocumentImpact, RepositoryDocumentLocation,
+    Location
 )
 
-from ..serializers.city import CitySerializer
-from ..serializers.repository import SimilarDocumentSerializer
+from core.serializers.repository import SimilarDocumentSerializer
+from core.serializers.location import LocationSerializer
 
-from ..nlp.processing import KeyphraseToKeywordProcessor
-from ..nlp.processing import keyword_processing
+from core.nlp.processing import KeyphraseToKeywordProcessor
+from core.nlp.processing import keyword_processing
 
 
 class AggregateLocationView(APIView):
     def get(self, request):
-        aggregate = RepositoryDocumentCity.objects
+        aggregate = RepositoryDocumentLocation.objects
 
         type_ = getattr(RepositoryDocument, request.query_params.get('type', '').upper(), '')
         aggregate = aggregate.filter(document__type=type_) if type_ else aggregate
-        aggregate = aggregate.values('document__type', 'city').annotate(doc_count=Count('document'))
+        aggregate = aggregate.values('document__type', 'location').annotate(doc_count=Count('document'))
 
         locations = collections.OrderedDict()
-        for city in aggregate:
-            id_ = city['city']
+        for a in aggregate:
+            id_ = a['location']
 
             if id_ not in locations:
                 locations[id_] = [0, 0]
 
-            dt = city['document__type']
+            dt = a['document__type']
             dt_index = 0 if dt == RepositoryDocument.SCIENTIFIC else 1
-            locations[id_][dt_index] += city['doc_count']
+            locations[id_][dt_index] += a['doc_count']
 
         data = []
-        cities = City.objects.filter(id__in=locations.keys()).order_by('id')
-        for city in cities:
-            d = CitySerializer(city, context={'request': request}).data
+        places = Location.objects.filter(id__in=locations.keys()).order_by('id')
+        for place in places:
+            d = LocationSerializer(place, context={'request': request}).data
             d.update(
                 {
-                    'num_scientific': locations[city.pk][0],
-                    'num_pilot': locations[city.pk][1],
+                    'num_scientific': locations[place.pk][0],
+                    'num_pilot': locations[place.pk][1],
                     'heatmap': 'https://api.mesoc.dev/aggregates/heatmap/?latitude={}&longitude={}'.format(
-                        city.latitude,
-                        city.longitude
+                        place.latitude,
+                        place.longitude
                     )
                 }
             )
-            locations.pop(city.pk)
+            locations.pop(place.pk)
             data.append(d)
 
         return Response(data=data, status=HTTP_200_OK)
@@ -111,8 +112,8 @@ class AggregateCellSimilarityView(APIView):
                 cells = RepositoryCell.objects.filter(
                     cell=form.cleaned_data['cell'],
                 ).exclude(
-                    document__cities__longitude=form.cleaned_data['longitude'],
-                    document__cities__latitude=form.cleaned_data['latitude']
+                    document__locations__longitude=form.cleaned_data['longitude'],
+                    document__locations__latitude=form.cleaned_data['latitude']
                 ).select_related('document').prefetch_related('keywords')
 
                 top = []
@@ -203,8 +204,8 @@ class AggregateImpactSimilarityView(APIView):
                 impacts = RepositoryDocumentImpact.objects.filter(
                     impact=form.cleaned_data['impact'],
                 ).exclude(
-                    document__cities__longitude=form.cleaned_data['longitude'],
-                    document__cities__latitude=form.cleaned_data['latitude']
+                    document__locations__longitude=form.cleaned_data['longitude'],
+                    document__locations__latitude=form.cleaned_data['latitude']
                 ).select_related('document').prefetch_related('keywords')
 
                 impacts = impacts.filter(document__type=type_) if type_ else impacts

@@ -228,3 +228,5 @@ CORE_GOOGLE_CLOUD_CREDENTIALS = {
         "gserviceaccount.com"
     )
 }
+
+CORE_GOOGLE_GEO_API_KEY = 'AIzaSyBNXScHQ992NTJVSw35bnQSVstElcDamXA'

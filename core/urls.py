@@ -8,7 +8,7 @@ from .views.aggregate import (
 )
 from .views.cell import CellViewSet
 from .views.impact import DocumentImpactViewSet
-from .views.location import LocationViewSet
+from .views.location import LocationView
 from .views.document import DocumentViewSet
 from .views.feedback import FeedbackView
 from .views.language import LanguageViewSet
@@ -23,7 +23,7 @@ router.register('account/verification', VerificationViewSet, basename='verificat
 router.register('account/password_reset', PasswordResetViewSet, basename='password-reset')
 router.register('cells', CellViewSet)
 router.register('impacts', DocumentImpactViewSet)
-router.register('locations', LocationViewSet)
+# router.register('locations', LocationViewSet)
 router.register('languages', LanguageViewSet)
 router.register('documents', DocumentViewSet)
 
@@ -40,5 +40,6 @@ urlpatterns = [
     path('aggregates/impact/', AggregateImpactView().as_view(), name='aggregate-impact'),
     path('aggregates/similar/cell/', AggregateCellSimilarityView().as_view(), name='aggregate-cell-similar'),
     path('aggregates/similar/impact/', AggregateImpactSimilarityView().as_view(), name='aggregate-impact-similar'),
-    path('feedback/', FeedbackView.as_view())
+    path('feedback/', FeedbackView.as_view()),
+    path('locations/', LocationView.as_view())
 ]
