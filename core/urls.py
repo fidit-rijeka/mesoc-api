@@ -23,7 +23,6 @@ router.register('account/verification', VerificationViewSet, basename='verificat
 router.register('account/password_reset', PasswordResetViewSet, basename='password-reset')
 router.register('cells', CellViewSet)
 router.register('impacts', DocumentImpactViewSet)
-# router.register('locations', LocationViewSet)
 router.register('languages', LanguageViewSet)
 router.register('documents', DocumentViewSet)
 

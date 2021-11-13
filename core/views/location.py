@@ -1,5 +1,3 @@
-from django.conf import settings
-
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
@@ -9,7 +7,6 @@ from core.forms import LocationForm
 from core.models import Location
 from core.permissions import IsVerified
 from core.serializers.location import LocationSerializer
-from core.geo_api.geo_api import GoogleGeoAPI
 
 
 class LocationView(APIView):

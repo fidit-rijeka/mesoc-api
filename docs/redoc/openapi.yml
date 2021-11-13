@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: 'MESOC REST API'
-  version: '1.0.0'
+  version: '0.9.9'
 paths:
   /account/:
     get:

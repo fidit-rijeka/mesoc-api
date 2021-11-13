@@ -3,7 +3,7 @@ from django.core.validators import FileExtensionValidator, MinLengthValidator
 
 from rest_framework.reverse import reverse
 from rest_framework.serializers import (
-    CharField, FileField, HyperlinkedModelSerializer, HyperlinkedRelatedField, SerializerMethodField, ValidationError
+    CharField, FileField, HyperlinkedModelSerializer, SerializerMethodField, ValidationError
 )
 
 from core.models import Document, Location
