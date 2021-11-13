@@ -3,11 +3,13 @@ import uuid
 from django.contrib import auth
 from django.core.validators import MinLengthValidator, MinValueValidator, MaxValueValidator
 from django.db.models import (
-    BooleanField, CASCADE, CharField, DateTimeField, FileField, FloatField, ForeignKey, IntegerField, ManyToManyField,
+    BooleanField, CASCADE, CharField, DateTimeField, FileField, FloatField, ForeignKey, ManyToManyField,
     Model, PROTECT, TextField, UUIDField, UniqueConstraint)
 
 import magic
 import fitz
+
+from core.models.location import Location
 
 
 class Document(Model):
@@ -42,7 +44,7 @@ class Document(Model):
     type = CharField(max_length=10, choices=TYPES.items())
     uploaded_at = DateTimeField(auto_now_add=True, blank=True)
     state = CharField(max_length=10, choices=STATES.items(), blank=True, default=PROCESSING)
-    cities = ManyToManyField('core.City', through='core.DocumentCity', related_name='cities')
+    locations = ManyToManyField('core.Location', through='core.DocumentLocation', related_name='locations')
     language = ForeignKey('core.Language', on_delete=PROTECT)
     impacts = ManyToManyField('core.Impact', through='core.DocumentImpact', related_name='documents')
     user = ForeignKey(auth.get_user_model(), on_delete=CASCADE, related_name='documents')
@@ -53,7 +55,12 @@ class Document(Model):
 
     @property
     def location(self):
-        return self.cities.filter(documentcity__primary=True).get()
+        try:
+            loc = self.locations.filter(documentlocation__primary=True).get()
+        except Location.DoesNotExist:
+            loc = None
+            
+        return loc
 
     @property
     def contents(self):
@@ -77,12 +84,6 @@ class Document(Model):
         return self._contents_cache
 
 
-class DocumentCity(Model):
-    document = ForeignKey('core.Document', on_delete=CASCADE)
-    city = ForeignKey('core.City', on_delete=CASCADE)
-    primary = BooleanField(default=True)
-
-
 class DocumentKeyword(Model):
     document = ForeignKey('core.Document', on_delete=CASCADE, related_name='keywords')
     value = CharField(max_length=100)
@@ -98,3 +99,9 @@ class DocumentImpact(Model):
     document = ForeignKey('core.Document', CASCADE, related_name='document_impacts')
     impact = ForeignKey('core.Impact', CASCADE, related_name='impact_documents')
     keywords = ManyToManyField('core.ImpactKeyword', related_name='document_impacts')
+
+
+class DocumentLocation(Model):
+    document = ForeignKey('core.Document', on_delete=CASCADE)
+    location = ForeignKey('core.Location', on_delete=CASCADE)
+    primary = BooleanField(default=True)
