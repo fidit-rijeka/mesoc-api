@@ -10,6 +10,7 @@ from .views.cell import CellViewSet
 from .views.impact import DocumentImpactViewSet
 from .views.location import LocationView
 from .views.document import DocumentViewSet
+from .views.export import DocumentExportView
 from .views.feedback import FeedbackView
 from .views.language import LanguageViewSet
 from .views.login import LoginView
@@ -25,6 +26,7 @@ router.register('cells', CellViewSet)
 router.register('impacts', DocumentImpactViewSet)
 router.register('languages', LanguageViewSet)
 router.register('documents', DocumentViewSet)
+router.register('export/documents', DocumentExportView, basename='export')
 
 urlpatterns = [
     path('', include(router.urls)),

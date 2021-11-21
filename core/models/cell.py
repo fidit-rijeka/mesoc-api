@@ -13,3 +13,7 @@ class Cell(Model):
     @property
     def user(self):
         return self.document.user  # required for object permission check
+
+    @property
+    def cell_2d(self):
+        return (self.cell // 3, self.cell % 3)

@@ -24,4 +24,5 @@ class User(AbstractBaseUser):
     id = UUIDField(default=uuid.uuid4, primary_key=True)
     email = EmailField(unique=True)
     verified = BooleanField(blank=True, default=False)
+    can_use_export_api = BooleanField(blank=True, default=False)
     USERNAME_FIELD = 'email'
