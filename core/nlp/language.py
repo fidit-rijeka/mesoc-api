@@ -31,7 +31,15 @@ class GoogleTranslator(BaseLanguageDetector, BaseTranslator):
             self._tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 
     def detect(self, text):
-        return self._tc.detect_language(text)['language']
+        sentences = self._tokenizer.tokenize(text)
+        source_text_chunk = ''
+        for sent in sentences:
+            if len(sent) + len(source_text_chunk) - 2 < self._chunk_size:
+                source_text_chunk += '. ' + sent
+            else:
+                break
+
+        return self._tc.detect_language(source_text_chunk)['language']
 
     def translate(self, text):
         if len(text) >= self._chunk_size:
@@ -40,15 +48,15 @@ class GoogleTranslator(BaseLanguageDetector, BaseTranslator):
             sentences = self._tokenizer.tokenize(text)
 
             for sent in sentences:
-                if len(sent) + len(source_text_chunk) < self._chunk_size:
-                    source_text_chunk += ' ' + sent
+                if len(sent) + len(source_text_chunk) - 2 < self._chunk_size:
+                    source_text_chunk += '. ' + sent
                 else:
                     translation_chunk = self._tc.translate(source_text_chunk, target_language='en')
-                    translated_text += ' ' + translation_chunk['translatedText']
+                    translated_text += '. ' + translation_chunk['translatedText']
                     source_text_chunk = sent
 
             translation_chunk = self._tc.translate(source_text_chunk, target_language='en')
-            translated_text = translated_text + ' ' + translation_chunk['translatedText']
+            translated_text = translated_text + '. ' + translation_chunk['translatedText']
 
             return translated_text
 
