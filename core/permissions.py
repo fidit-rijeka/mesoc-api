@@ -8,11 +8,7 @@ class IsVerified(BasePermission):
         return request.user and request.user.verified
 
 
-class IsSelf(BasePermission):
-    def has_object_permission(self, request, view, obj):
-        return obj == request.user
+class CanUseExportApi(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.can_use_export_api
 
-
-class IsOwner(BasePermission):
-    def has_object_permission(self, request, view, obj):
-        return obj.user == request.user
