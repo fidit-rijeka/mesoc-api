@@ -77,6 +77,10 @@ class Document(Model):
         return magic.from_buffer(self._raw_contents, True) == 'application/pdf'
 
     @property
+    def keywords_list(self):
+        return self.keywords.values_list('value', flat=True)
+
+    @property
     def _raw_contents(self):
         if not self._contents_cache:
             with self.file.open() as f:
@@ -99,6 +103,10 @@ class DocumentImpact(Model):
     document = ForeignKey('core.Document', CASCADE, related_name='document_impacts')
     impact = ForeignKey('core.Impact', CASCADE, related_name='impact_documents')
     keywords = ManyToManyField('core.ImpactKeyword', related_name='document_impacts')
+
+    @property
+    def keywords_list(self):
+        return self.keywords.values_list('value', flat=True)
 
 
 class DocumentLocation(Model):
