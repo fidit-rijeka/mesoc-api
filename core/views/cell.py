@@ -29,13 +29,13 @@ class CellViewSet(RetrieveModelMixin, GenericViewSet):
     def similar(self, request, pk=None):
         document_cell = self.get_object()
 
-        document_city = document_cell.document.cities.filter(documentcity__primary=True).get()
+        document_location = document_cell.document.locations.filter(documentlocation__primary=True).get()
 
         cells = RepositoryCell.objects.filter(
             cell=document_cell.cell,
         ).exclude(
-            document__cities__longitude=document_city.longitude,
-            document__cities__latitude=document_city.latitude,
+            document__locations__longitude=document_location.longitude,
+            document__locations__latitude=document_location.latitude,
         ).select_related('document').prefetch_related('keywords')
 
         top = []

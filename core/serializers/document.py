@@ -3,13 +3,13 @@ from django.core.validators import FileExtensionValidator, MinLengthValidator
 
 from rest_framework.reverse import reverse
 from rest_framework.serializers import (
-    CharField, FileField, HyperlinkedModelSerializer, HyperlinkedRelatedField, SerializerMethodField, ValidationError
+    CharField, FileField, HyperlinkedModelSerializer, SerializerMethodField, ValidationError
 )
 
-from ..models import City, Document
-from ..serializers.city import CitySerializer
-from ..serializers.language import LanguageSerializer
-from ..validators import FileMaxSizeValidator, FileMimeTypeValidator
+from core.models import Document, Location
+from core.serializers.language import LanguageSerializer
+from core.serializers.location import LocationSerializer
+from core.validators import FileMaxSizeValidator, FileMimeTypeValidator
 
 
 class BaseDocumentSerializer(HyperlinkedModelSerializer):
@@ -26,7 +26,7 @@ class BaseDocumentSerializer(HyperlinkedModelSerializer):
         return LanguageSerializer(obj.language, context=self.context).data
 
     def get_location(self, obj):
-        return CitySerializer(obj.location, context=self.context).data
+        return LocationSerializer(obj.location, context=self.context).data
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -37,7 +37,6 @@ class BaseDocumentSerializer(HyperlinkedModelSerializer):
 
 class DocumentSerializer(BaseDocumentSerializer):
     title = CharField(max_length=100, validators=(MinLengthValidator(1),), source='file_title', read_only=True)
-    location = HyperlinkedRelatedField(view_name='city-detail', read_only=True)
     heatmap = SerializerMethodField()
     impacts = SerializerMethodField()
     user = SerializerMethodField()
@@ -62,7 +61,7 @@ class DocumentSerializer(BaseDocumentSerializer):
 
 class DocumentUploadSerializer(BaseDocumentSerializer):
     title = CharField(max_length=100, validators=(MinLengthValidator(1),), source='file_title',)
-    location = HyperlinkedRelatedField(view_name='city-detail', queryset=City.objects.exclude(name='Unknown'))
+    location = CharField(max_length=142, required=False)
     heatmap = SerializerMethodField(read_only=True)
     impacts = SerializerMethodField(read_only=True)
     user = SerializerMethodField(read_only=True)
@@ -95,10 +94,18 @@ class DocumentUploadSerializer(BaseDocumentSerializer):
         read_only_fields = ('uploaded_at', 'state', 'url')
 
     def create(self, validated_data):
-        city = validated_data.pop('location')
         validated_data['user'] = self.context['request'].user
+
+        location = validated_data.pop('location', None)
+        if location is None:
+            location = Location.objects.filter(city='Unknown', country='Unknown').get()
+        else:
+            if location.pk is None:
+                location.save()
+
         obj = super().create(validated_data)
-        obj.cities.add(city)
+        DocumentLocation = self.Meta.model.locations.through
+        DocumentLocation(document=obj, location=location, primary=True).save()
 
         return obj
 
@@ -107,3 +114,14 @@ class DocumentUploadSerializer(BaseDocumentSerializer):
             raise ValidationError('Document with the same title already exists.', code='invalid')
 
         return value
+
+    def validate_location(self, value):
+        loc = Location.search_api(address=value)
+        if len(loc) == 0:
+            raise ValidationError('Location with the specified address not found.', code='invalid')
+        if len(loc) != 1:
+            raise ValidationError('Location with the specified address is not unique.', code='invalid')
+        else:
+            loc = loc[0]
+
+        return loc

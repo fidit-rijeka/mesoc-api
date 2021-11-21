@@ -7,12 +7,12 @@ from django.db.models import (
 
 class RepositoryCellManager(Manager):
     def get_aggregate(self, latitude=None, longitude=None, type_=None):
-        aggregate = self.select_related('city').select_related('document')
+        aggregate = self.select_related('location').select_related('document')
 
         type_ = getattr(RepositoryDocument, type_.upper(), '')
         aggregate = aggregate.filter(document__type=type_) if type_ else aggregate
-        aggregate = aggregate.filter(document__cities__latitude=latitude) if latitude is not None else aggregate
-        aggregate = aggregate.filter(document__cities__longitude=longitude) if longitude is not None else aggregate
+        aggregate = aggregate.filter(document__locations__latitude=latitude) if latitude is not None else aggregate
+        aggregate = aggregate.filter(document__locations__longitude=longitude) if longitude is not None else aggregate
 
         return aggregate.values('cell').annotate(classification=Avg('classification'))
 
@@ -20,8 +20,13 @@ class RepositoryCellManager(Manager):
 class RepositoryCellKeywordManager(Manager):
     def get_aggregate_keywords(self, cell=None, latitude=None, longitude=None, type_=None):
         aggregate = self.filter(cell__cell=cell) if cell is not None else self
-        aggregate = aggregate.filter(cell__document__cities__latitude=latitude) if latitude is not None else aggregate
-        aggregate = aggregate.filter(cell__document__cities__longitude=longitude) if longitude is not None else aggregate
+
+        if latitude:
+            aggregate = aggregate.filter(cell__document__locations__latitude=latitude)
+
+        if longitude:
+            aggregate = aggregate.filter(cell__document__locations__longitude=longitude)
+
         aggregate = aggregate.filter(cell__document__type=type_) if type_ else aggregate
 
         return aggregate.values_list('value', flat=True)
@@ -32,8 +37,8 @@ class RepositoryDocumentImpactManager(Manager):
         aggregate = self.select_related('document').select_related('impact').prefetch_related('keywords')
 
         aggregate = aggregate.filter(impact__column=column)
-        aggregate = aggregate.filter(document__cities__latitude=latitude) if latitude is not None else aggregate
-        aggregate = aggregate.filter(document__cities__longitude=longitude) if longitude is not None else aggregate
+        aggregate = aggregate.filter(document__locations__latitude=latitude) if latitude is not None else aggregate
+        aggregate = aggregate.filter(document__locations__longitude=longitude) if longitude is not None else aggregate
         aggregate = aggregate.filter(document__type=type_) if type_ else aggregate
 
         aggregate_values = aggregate.values('impact__id', 'impact__column', 'impact__value').distinct()
@@ -69,8 +74,8 @@ class RepositoryDocumentImpactManager(Manager):
         aggregate = self.select_related('document').select_related('impact').prefetch_related('keywords')
 
         aggregate = aggregate.filter(impact=impact) if impact else aggregate
-        aggregate = aggregate.filter(document__cities__latitude=latitude) if latitude is not None else aggregate
-        aggregate = aggregate.filter(document__cities__longitude=longitude) if longitude is not None else aggregate
+        aggregate = aggregate.filter(document__locations__latitude=latitude) if latitude is not None else aggregate
+        aggregate = aggregate.filter(document__locations__longitude=longitude) if longitude is not None else aggregate
         aggregate = aggregate.filter(document__type=type_) if type_ else aggregate
 
         return aggregate.values_list('keywords__value', flat=True)
@@ -94,12 +99,12 @@ class RepositoryDocument(Model):
         through='core.RepositoryDocumentImpact',
         related_name='repository_documents'
     )
-    cities = ManyToManyField('core.City', through='core.RepositoryDocumentCity',)
+    locations = ManyToManyField('core.Location', through='core.RepositoryDocumentLocation',)
 
 
-class RepositoryDocumentCity(Model):
+class RepositoryDocumentLocation(Model):
     document = ForeignKey('core.RepositoryDocument', on_delete=CASCADE)
-    city = ForeignKey('core.City', on_delete=CASCADE)
+    location = ForeignKey('core.Location', on_delete=CASCADE)
     primary = BooleanField(default=True)
 
 

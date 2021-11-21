@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: 'MESOC REST API'
-  version: '0.9.0'
+  version: '0.9.9'
 paths:
   /account/:
     get:
@@ -822,19 +822,12 @@ paths:
       description: 'Requires the user to be authenticated and verified.'
       parameters:
         - in: query
-          name: city
+          name: address
           schema:
             type: string
-            example: 'rijeka'
-          required: false
-          description: "Matches any city whose name starts with the specified value."
-        - in: query
-          name: country
-          schema:
-            type: string
-            example: 'croatia'
-          required: false
-          description: "Matches any country whose name starts with the specified value."
+            example: 'Rijeka, Croatia'
+          required: true
+          description: "Location address."
       responses:
         '200':
           content:
@@ -844,27 +837,6 @@ paths:
                 items:
                   $ref: '#/components/schemas/Location'
           description: ''
-      security:
-        - DRFToken: []
-      tags:
-        - locations
-  /locations/{id}/:
-    get:
-      operationId: Get location
-      description: 'Requires the user to be authenticated and verified.'
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Location'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HttpError'
-          description: 'Location with the specified `id` does not exist.'
       security:
         - DRFToken: []
       tags:
@@ -1109,10 +1081,15 @@ components:
     Location:
       type: object
       properties:
+        address:
+          type: string
+          minLength: 1
+          maxLength: 142
+          example: 'Rijeka, Croatia'
         city:
           type: string
-          maxLength: 58
           minLength: 1
+          maxLength: 70
           example: 'Rijeka'
         longitude:
           type: number
@@ -1122,12 +1099,9 @@ components:
           example: 45.3430600000000000
         country:
           type: string
-          maxLength: 56
+          minLength: 1
+          maxLength: 70
           example: 'Croatia'
-        url:
-          type: string
-          format: url
-          example: 'http://api.mesoc.dev/locations/4/'
     State:
       type: object
       properties:
@@ -1214,9 +1188,8 @@ components:
           example: 'http://api.mesoc.dev/languages/2/'
         location:
           type: string
-          format: url
-          description: 'Location uniform resource locator.'
-          example: 'http://api.mesoc.dev/locations/2/'
+          description: 'Location address.'
+          example: 'Rijeka, Croatia'
         file:
           type: string
           format: file
@@ -1225,10 +1198,15 @@ components:
     LocationAggregate:
       type: object
       properties:
+        address:
+          type: string
+          minLength: 1
+          maxLength: 142
+          example: 'Rijeka, Croatia'
         city:
           type: string
-          maxLength: 58
           minLength: 1
+          maxLength: 70
           example: 'Rijeka'
         longitude:
           type: number
@@ -1238,12 +1216,9 @@ components:
           example: 45.3430600000000000
         country:
           type: string
-          maxLength: 56
+          minLength: 1
+          maxLength: 70
           example: 'Croatia'
-        url:
-          type: string
-          format: url
-          example: 'http://api.mesoc.dev/locations/4/'
         num_scientific:
           type: integer
           description: 'Number of scientific studies.'

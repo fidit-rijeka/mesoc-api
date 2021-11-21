@@ -28,10 +28,10 @@ class DocumentImpactViewSet(RetrieveModelMixin, GenericViewSet):
     def similar(self, request, pk=None):
         document_impact = self.get_object()
 
-        document_city = document_impact.document.cities.filter(documentcity__primary=True).get()
+        document_location = document_impact.document.locations.filter(documentlocation__primary=True).get()
         document_impacts = RepositoryDocumentImpact.objects.exclude(
-            document__cities__longitude=document_city.longitude,
-            document__cities__latitude=document_city.latitude,
+            document__locations__longitude=document_location.longitude,
+            document__locations__latitude=document_location.latitude,
         )
 
         document_impacts = document_impacts.filter(impact__column=document_impact.impact.column)
