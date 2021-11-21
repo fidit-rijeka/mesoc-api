@@ -4,3 +4,5 @@ db.sqlite3
 migrations
 !core/migrations
 .gitignore
+media
+.idea
