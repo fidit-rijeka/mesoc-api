@@ -9,13 +9,13 @@ from .models import PasswordReset, Verification
 
 @receiver(signals.post_save, sender=auth.get_user_model())
 def generate_user_token(sender, instance, created, **kwargs):
-    if created:
+    if created and not kwargs.get('raw', False):
         Token.objects.create(user=instance)
 
 
 @receiver(signals.post_save, sender=auth.get_user_model())
 def create_verification(sender, instance, created, **kwargs):
-    if created:
+    if created and not kwargs.get('raw', False):
         Verification.objects.create(user=instance)
 
 
