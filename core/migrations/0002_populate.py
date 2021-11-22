@@ -1,8 +1,4 @@
-from django.contrib import auth
 from django.db import migrations
-from django.db.models import signals
-
-from ..signals import send_verification_email
 
 LANGUAGES = (
     {
@@ -103,46 +99,12 @@ LANGUAGES = (
     }
 )
 
-USERS = (
-    {
-        'email': 'dev@mesoc.dev',
-        'password': 'devtest123',
-        'verified': True
-    },
-    {
-        'email': 'mulder@mesoc.dev',
-        'password': 'devtest123',
-        'verified': True
-    },
-    {
-        'email': 'scully@mesoc.dev',
-        'password': 'devtest123',
-        'verified': True
-    },
-)
 
-
-def populate_languages(apps, schema_editora):
+def populate_languages(apps, schema_editor):
     Language = apps.get_model('core', 'Language')
     Language.objects.all().delete()
     for language in LANGUAGES:
         Language.objects.create(**language)
-
-
-def populate_users(apps, schema_editor):
-    # Verification = apps.get_model('core', 'Verification')
-    from ..models import Verification
-    signals.post_save.disconnect(send_verification_email, Verification)
-
-    User = auth.get_user_model()
-    User.objects.all().delete()
-    for user in USERS:
-        u = User(**user)
-        u.set_password(user['password'])
-        u.save()
-        u.verification.delete()
-
-    signals.post_save.connect(send_verification_email, Verification)
 
 
 class Migration(migrations.Migration):
@@ -152,6 +114,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(populate_languages),
-        migrations.RunPython(populate_users),
+        migrations.RunPython(populate_languages)
     ]

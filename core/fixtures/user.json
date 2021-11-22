@@ -1,0 +1,78 @@
+[
+{
+    "model": "core.user",
+    "pk": "13133043-5d4c-417f-90df-2290fbfbb445",
+    "fields": {
+        "password": "pbkdf2_sha256$216000$7GxyERf7mqte$HhSvK3m0rVNHw3OBFcII8pfF2szRdNbja914GYhxNC4=",
+        "last_login": null,
+        "email": "mulder@mesoc.dev",
+        "verified": true,
+        "can_use_export_api": false
+    }
+},
+{
+    "model": "core.user",
+    "pk": "321169da-8f08-4eb2-b99c-83eb82ec2917",
+    "fields": {
+        "password": "pbkdf2_sha256$216000$w32C8Uo2cUBR$4Jddmk8sN4Fzdq+1mZZZHTdlo5euS21HvnANG8P5Uso=",
+        "last_login": null,
+        "email": "repository@localhost",
+        "verified": true,
+        "can_use_export_api": true
+    }
+},
+{
+    "model": "core.user",
+    "pk": "a3b4edb7-3664-4502-a907-e203165dfc02",
+    "fields": {
+        "password": "pbkdf2_sha256$216000$dHWct6AOIiLY$mcDLf27z6pvuoU9C/3JE1lm4ZQ0kw8PLJs83LvwywD8=",
+        "last_login": null,
+        "email": "dev@mesoc.dev",
+        "verified": true,
+        "can_use_export_api": true
+    }
+},
+{
+    "model": "core.user",
+    "pk": "ad49c90c-3503-4faa-a225-d2a6cf9856be",
+    "fields": {
+        "password": "pbkdf2_sha256$216000$fr459QU1ciML$DxezgEiD01l9I3rsjouhwDe1vKrKR9RuMCy5HzhfIAo=",
+        "last_login": null,
+        "email": "scully@mesoc.dev",
+        "verified": true,
+        "can_use_export_api": false
+    }
+},
+{
+    "model": "authtoken.token",
+    "pk": "2b46b5edde25ba9054bb28d3a55fae4047cfdcdb",
+    "fields": {
+        "user": "ad49c90c-3503-4faa-a225-d2a6cf9856be",
+        "created": "2021-10-09T09:27:40.437Z"
+    }
+},
+{
+    "model": "authtoken.token",
+    "pk": "4efda293b6becbfa61d29b5b7c819ebe2991e5c1",
+    "fields": {
+        "user": "321169da-8f08-4eb2-b99c-83eb82ec2917",
+        "created": "2021-11-18T14:01:26.897Z"
+    }
+},
+{
+    "model": "authtoken.token",
+    "pk": "c4eeccb224c0cf14ba8bc42dedd64b1a7e8940b0",
+    "fields": {
+        "user": "a3b4edb7-3664-4502-a907-e203165dfc02",
+        "created": "2021-10-09T09:27:40.291Z"
+    }
+},
+{
+    "model": "authtoken.token",
+    "pk": "f21ba013506b8b3479dbca59d9b84cb743305ef1",
+    "fields": {
+        "user": "13133043-5d4c-417f-90df-2290fbfbb445",
+        "created": "2021-10-09T09:27:40.375Z"
+    }
+}
+]
