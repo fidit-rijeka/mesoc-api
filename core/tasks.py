@@ -46,6 +46,12 @@ def send_mail(subject, message, from_, to):
 
 
 @celery.shared_task(base=LoggedTask)
+def send_feedback_mail(subject, message, from_, to):
+    msg = mail.EmailMessage(subject, message, settings.DEFAULT_FROM_EMAIL, to, headers={'From': from_})
+    msg.send()
+
+
+@celery.shared_task(base=LoggedTask)
 def read_contents(document_id):
     document = Document.objects.filter(id=document_id).get()
 

@@ -16,10 +16,10 @@ class FeedbackView(APIView):
         fs = FeedbackSerializer(data=request.data)
 
         if fs.is_valid():
-            tasks.send_mail.delay(fs.validated_data['subject'],
-                                  fs.validated_data['message'],
-                                  request.user.email,
-                                  (settings.CORE_FEEDBACK_EMAIL,))
+            tasks.send_feedback_mail.delay(fs.validated_data['subject'],
+                                           fs.validated_data['message'],
+                                           request.user.email,
+                                           (settings.CORE_FEEDBACK_EMAIL,))
             return Response(status=status.HTTP_202_ACCEPTED, data=fs.validated_data)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST, data=fs.errors)
