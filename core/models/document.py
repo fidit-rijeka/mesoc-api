@@ -33,13 +33,9 @@ class Document(Model):
         PILOT: PILOT
     }
 
-    class Meta:
-        unique_together = ('file_title', 'user')
-
     id = UUIDField(default=uuid.uuid4, primary_key=True)
     file = FileField(upload_to='documents/',)
-    file_title = CharField(max_length=200, validators=(MinLengthValidator(1),),)
-    document_title = CharField(blank=True, default='', max_length=200, validators=(MinLengthValidator(1),))
+    title = CharField(max_length=200, validators=(MinLengthValidator(1),), )
     abstract = TextField(max_length=1000, validators=(MinLengthValidator(1),))
     type = CharField(max_length=10, choices=TYPES.items())
     uploaded_at = DateTimeField(auto_now_add=True, blank=True)

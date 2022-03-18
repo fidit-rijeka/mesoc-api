@@ -36,7 +36,7 @@ class BaseDocumentSerializer(HyperlinkedModelSerializer):
 
 
 class DocumentSerializer(BaseDocumentSerializer):
-    title = CharField(max_length=100, validators=(MinLengthValidator(1),), source='file_title', read_only=True)
+    title = CharField(max_length=100, validators=(MinLengthValidator(1),), read_only=True)
     heatmap = SerializerMethodField()
     impacts = SerializerMethodField()
     user = SerializerMethodField()
@@ -60,7 +60,7 @@ class DocumentSerializer(BaseDocumentSerializer):
 
 
 class DocumentUploadSerializer(BaseDocumentSerializer):
-    title = CharField(max_length=100, validators=(MinLengthValidator(1),), source='file_title',)
+    title = CharField(max_length=100, validators=(MinLengthValidator(1),))
     location = CharField(max_length=142, required=False)
     heatmap = SerializerMethodField(read_only=True)
     impacts = SerializerMethodField(read_only=True)
@@ -110,7 +110,9 @@ class DocumentUploadSerializer(BaseDocumentSerializer):
         return obj
 
     def validate_title(self, value):
-        if self.Meta.model.objects.filter(file_title=value, user=self.context['request'].user).exists():
+        Document = self.Meta.model
+        qs = Document.objects.filter(title=value, state=Document.PROCESSED, user=self.context['request'].user)
+        if qs.exists():
             raise ValidationError('Document with the same title already exists.', code='invalid')
 
         return value

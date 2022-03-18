@@ -33,7 +33,7 @@ class LanguageExportSerializer(ModelSerializer):
 
 
 class DocumentExportSerializer(ModelSerializer):
-    title = CharField(max_length=100, source='file_title', read_only=True)
+    title = CharField(max_length=100, source='title', read_only=True)
     language = LanguageExportSerializer()
     location = LocationSerializer()
     keywords = ListField(source='keywords_list')
