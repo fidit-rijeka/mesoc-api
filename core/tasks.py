@@ -33,7 +33,7 @@ def fail_document(document_id):
         render_to_string('core/document_processed_subject.txt'),
         render_to_string(
             'core/document_processed_fail_message.txt',
-            context={'document_title': document.file_title, 'upload_url': settings.CORE_PROCESSING_FAIL_URL}
+            context={'document_title': document.title, 'upload_url': settings.CORE_PROCESSING_FAIL_URL}
         ),
         None,
         (document.user.email,),
@@ -196,7 +196,7 @@ def mail_results(document_id):
         render_to_string('core/document_processed_subject.txt'),
         render_to_string(
             'core/document_processed_success_message.txt',
-            context={'document_title': document.file_title, 'my_documents_url': settings.CORE_PROCESSING_SUCCESS_URL}
+            context={'document_title': document.title, 'my_documents_url': settings.CORE_PROCESSING_SUCCESS_URL}
         ),
         None,
         (document.user.email,),
