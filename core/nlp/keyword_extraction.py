@@ -4,6 +4,7 @@ import nltk
 import pke
 
 from core.nlp.processing import misc
+from core.nlp.processing import keyword_processing, text_processing
 
 
 class BaseKeywordExtractor(abc.ABC):
@@ -57,8 +58,8 @@ class NgramImpactExtractor(misc.PreProcessing, BaseKeywordExtractor):
             impact_kw_map,
             ngrams=(2, 3),
             *args,
-            tokenizer=misc.default_word_tokenizer,
-            lemmatizer=misc.default_lemmatizer,
+            tokenizer=text_processing.default_word_tokenizer,
+            lemmatizer=keyword_processing.default_lemmatizer,
             **kwargs
     ):
         super().__init__(*args, **kwargs)
