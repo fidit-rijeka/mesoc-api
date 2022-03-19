@@ -2,7 +2,7 @@ import abc
 
 import nltk
 
-from core.nlp.processing import misc
+from . import text_processing
 
 
 class BaseKeywordsProcessor(abc.ABC):
@@ -11,12 +11,21 @@ class BaseKeywordsProcessor(abc.ABC):
         raise NotImplementedError
 
 
+class WordNetLemmatizer(nltk.WordNetLemmatizer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        nltk.corpus.wordnet.ensure_loaded()
+
+
+default_lemmatizer = WordNetLemmatizer()
+
+
 class KeyphraseToKeywordProcessor(BaseKeywordsProcessor):
     def __init__(
             self,
             *args,
-            word_tokenizer=misc.default_word_tokenizer,
-            lemmatizer=misc.default_lemmatizer,
+            word_tokenizer=text_processing.default_word_tokenizer,
+            lemmatizer=default_lemmatizer,
             stopwords=nltk.corpus.stopwords.words('english'),
             **kwargs
     ):

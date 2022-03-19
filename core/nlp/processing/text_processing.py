@@ -11,6 +11,9 @@ from textacy.preprocessing.normalize import quotation_marks
 
 from . import misc
 
+default_sent_tokenizer = nltk.load('tokenizers/punkt/english.pickle')
+default_word_tokenizer = nltk.NLTKWordTokenizer()
+
 
 class BaseTextProcessor(abc.ABC):
     @abc.abstractmethod
@@ -36,7 +39,7 @@ class CompoundEntitiesProcessor(BaseTextProcessor):
 
 
 class MinSentenceLengthProcessor(BaseTextProcessor):
-    def __init__(self, min_sentence_length, *args, sent_tokenizer=misc.default_sent_tokenizer, **kwargs):
+    def __init__(self, min_sentence_length, *args, sent_tokenizer=default_sent_tokenizer, **kwargs):
         super().__init__(*args, **kwargs)
 
         if min_sentence_length < 1:
@@ -94,4 +97,4 @@ class DigitProcessor(BaseTextProcessor):
 
 class TokenProcessor(BaseTextProcessor):
     def process(self, text):
-        return misc.default_word_tokenizer(text)
+        return default_word_tokenizer.tokenize(text)
