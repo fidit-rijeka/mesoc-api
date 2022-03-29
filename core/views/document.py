@@ -12,7 +12,7 @@ from ..forms import DocumentImpactsForm
 from ..models import Document
 from ..permissions import IsVerified
 from ..serializers.cell import CellSerializer
-from ..serializers.document import DocumentUploadSerializer, DocumentSerializer
+from ..serializers.document import DocumentClassificationSerializer, DocumentUploadSerializer, DocumentSerializer
 from ..serializers.impact import DocumentImpactSerializer
 
 
@@ -23,6 +23,7 @@ class DocumentViewSet(ModelViewSet):
     serializer_class = DocumentSerializer
     serializer_classes = {
         'create': DocumentUploadSerializer,
+        'classification': DocumentClassificationSerializer
     }
 
     def get_queryset(self):
@@ -61,10 +62,22 @@ class DocumentViewSet(ModelViewSet):
             data = form.errors
             status = HTTP_400_BAD_REQUEST
 
-        return Response(
-            status=status,
-            data=data
-        )
+        return Response(status=status, data=data)
+
+    @action(methods=('patch',), detail=True)
+    def classification(self, request, pk=None):
+        document = self.get_object()
+        serializer = self.get_serializer(document, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            return Response(
+                status=HTTP_200_OK,
+                data=CellSerializer(document.historical_cells, many=True, context={'request': self.request}).data
+            )
+        else:
+            return Response(status=HTTP_400_BAD_REQUEST, data=serializer.errors)
 
     def get_serializer(self, *args, **kwargs):
         context = {'request': self.request}
