@@ -11,7 +11,7 @@ from .. import tasks
 from ..forms import DocumentImpactsForm
 from ..models import Document
 from ..permissions import IsVerified
-from ..serializers.cell import CellSerializer
+from ..serializers.cell import CellSerializer, HistoricalCellSerializer
 from ..serializers.document import DocumentClassificationSerializer, DocumentUploadSerializer, DocumentSerializer
 from ..serializers.impact import DocumentImpactSerializer
 
@@ -74,7 +74,11 @@ class DocumentViewSet(ModelViewSet):
 
             return Response(
                 status=HTTP_200_OK,
-                data=CellSerializer(document.historical_cells, many=True, context={'request': self.request}).data
+                data=HistoricalCellSerializer(
+                    document.historical_cells,
+                    many=True,
+                    context={'request': self.request}
+                ).data
             )
         else:
             return Response(status=HTTP_400_BAD_REQUEST, data=serializer.errors)
