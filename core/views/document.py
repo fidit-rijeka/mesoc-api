@@ -93,7 +93,7 @@ class DocumentViewSet(ModelViewSet):
         else:
             response = Response(
                 status=HTTP_400_BAD_REQUEST,
-                data={'non_field_errors':  'Unprocessed or successfully processed documents can not be deleted.'}
+                data={'non_field_errors':  ['Unprocessed or successfully processed documents can not be deleted.']}
             )
 
         return response
