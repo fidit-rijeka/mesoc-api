@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
-  title: 'MESOC REST API'
-  version: '0.9.9'
+  title: 'MESOC Toolkit REST API'
+  version: '1.5.0'
 paths:
   /account/:
     get:
@@ -327,7 +327,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/FormError'
-            description: ''
+          description: ''
       tags:
         - aggregates
   /aggregates/similar/cell/:
@@ -703,6 +703,48 @@ paths:
         - DRFToken: []
       tags:
         - documents
+  /documents/{id}/classification/:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: 'uuid'
+          pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}'
+    patch:
+      operationId: Classification
+      description: 'Reclassify document matrix. Requires the user to be authenticated and verified.'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentClassification'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HistoricalCell'
+          description: 'Original cell classification.'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormError'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+          description: 'Document with the specified `id` does not belong to the authenticated user or does not exist.'
+      security:
+        - DRFToken: []
+      tags:
+        - documents
   /documents/{id}/impacts/:
     parameters:
       - name: id
@@ -866,6 +908,21 @@ components:
           type: string
           format: url
           example: 'http://api.mesoc.dev/cells/4/'
+    HistoricalCell:
+      type: object
+      properties:
+        cell:
+          type: integer
+          minimum: 0
+          maximum: 29
+          example: 5
+        classification:
+          type: number
+          example: 0.7
+        document:
+          type: string
+          format: url
+          example: 'https://api.mesoc.dev/documents/bec0f39a-503d-413e-968f-a289f3420621/'
     Impact:
       type: object
       properties:
@@ -1147,6 +1204,9 @@ components:
           $ref: '#/components/schemas/Language'
         location:
           $ref: '#/components/schemas/Location'
+        reclassified:
+          type: boolean
+          example: false
         heatmap:
           type: string
           format: url
@@ -1155,6 +1215,10 @@ components:
           type: string
           format: url
           example: 'http://api.mesoc.dev/documents/bec0f39a-503d-413e-968f-a289f3420621/impacts/'
+        classification:
+          type: string
+          format: url
+          example: 'http://api.mesoc.dev/documents/bec0f39a-503d-413e-968f-a289f3420621/classification/'
         user:
           type: string
           format: url
@@ -1195,6 +1259,18 @@ components:
           format: file
           description: 'Text or PDF file to upload.'
           example: '/home/mulder/proof.pdf'
+    DocumentClassification:
+      type: object
+      properties:
+        cells:
+          type: array
+          minItems: 1
+          maxItems: 30
+          minimum: 0
+          maximum: 29
+          items:
+            type: integer
+          example: [0, 5, 28, 29]
     LocationAggregate:
       type: object
       properties:
