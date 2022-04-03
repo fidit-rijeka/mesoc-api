@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title: 'MESOC REST API'
-  version: '0.9.9'
+  version: '1.1.0'
 paths:
   /account/:
     get:
@@ -660,6 +660,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/FormError'
           description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+          description: 'Document with the specified `id` does not belong to the authenticated user or does not exist.'
+      security:
+        - DRFToken: []
+      tags:
+        - documents
+    delete:
+      operationId: Delete document
+      description: Delete unsuccessfully processed document. Requires the user to be authenticated and verified.
+      responses:
+        '204':
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormError'
+          description: 'Document with the specified `id` has been successfully processed.'
         '404':
           content:
             application/json:

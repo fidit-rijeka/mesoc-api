@@ -18,7 +18,7 @@ from ..serializers.impact import DocumentImpactSerializer
 
 class DocumentViewSet(ModelViewSet):
     queryset = Document.objects.all()
-    http_method_names = ('get', 'post', 'patch')
+    http_method_names = ('get', 'post', 'patch', 'delete')
     permission_classes = (IsAuthenticated, IsVerified,)
     serializer_class = DocumentSerializer
     serializer_classes = {
@@ -83,5 +83,17 @@ class DocumentViewSet(ModelViewSet):
             tasks.commit_results.s(document_id),
             tasks.mail_results.si(document_id)
         ).apply_async(link_error=tasks.fail_document.si(document_id))
+
+        return response
+
+    def destroy(self, request, *args, **kwargs):
+        document = self.get_object()
+        if document.state not in (document.PROCESSING, document.PROCESSED):
+            response = super().destroy(request, *args, **kwargs)
+        else:
+            response = Response(
+                status=HTTP_400_BAD_REQUEST,
+                data={'non_field_errors':  'Unprocessed or successfully processed documents can not be deleted.'}
+            )
 
         return response
