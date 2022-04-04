@@ -1,9 +1,7 @@
 import abc
 import logging
-import re
 
-import geopy.exc
-import geopy.geocoders
+import googlemaps
 
 import core.geo_api.location
 
@@ -16,62 +14,47 @@ class BaseGeoAPI(abc.ABC):
         raise NotImplementedError
 
 
-class GoogleGeoAPI(BaseGeoAPI):
+class GooglePlacesAPI(BaseGeoAPI):
     def __init__(self, api_key):
-        self._api = geopy.geocoders.GoogleV3(api_key=api_key)
+        self._client = googlemaps.Client(api_key)
+        self._filter = {'country', 'locality', 'administrative_area_level_3'}
 
     def search(self, address):
-        locations = self._geocode_address(address)
-        filtered_locations = self._filter_political(locations)
-        extracted = self._extract_names(filtered_locations)
+        locations = self._search_places(address)
+        locations = self._filter_places(locations)
 
-        return extracted
+        return [self._create_location(location) for location in locations] if locations else []
 
-    def _geocode_address(self, address):
+    def _search_places(self, address):
         try:
-            response = self._api.geocode(address, exactly_one=False)
-        except geopy.exc.GeocoderQueryError as e:
-            response = None
-            logger.error(e, exc_info=True)
-
-        if response is not None:
-            logger.info('Listing locations: {}.'.format(response))
-            locations = response
-        else:
-            locations = []
+            locations = self._client.places(address)['results']
+        except (googlemaps.exceptions.TransportError, googlemaps.exceptions.ApiError) as e:
+            logger.error(e)
 
         logger.debug('Found {} locations.'.format(len(locations)))
-
         return locations
 
-    def _filter_political(self, locations):
-        political_list = [
-            x for x in locations if ('political' in x.raw['types'])  # or ('natural_feature' in x.raw['types'])
-        ]
-        return political_list
+    def _filter_places(self, locations):
+        places = []
+        for location in locations:
+            types = set(location['types'])
+            if len(types & self._filter) > 0:
+                places.append(location)
 
-    def _extract_names(self, locations):
-        extracted = []
-        raw_list = [x.raw for x in locations]
-        for loc in raw_list:
-            address = loc['formatted_address']
-            address = ''.join([i for i in address if not i.isdigit()])
-            location = loc['geometry']
-            latitude = location['location']['lat']
-            longitude = location['location']['lng']
+        return places
 
-            address = re.split(r',| - ', address)
-            address = [x.strip() for x in address]
-            address = [a for a in address if a]
+    def _create_location(self, location):
+        id_ = location['place_id']
 
-            if len(address) == 1:
-                city = None
-                country = address[0]
-            else:
-                city = address[0]
-                country = address[-1]
+        formatted_address = location['formatted_address'].split()
+        if len(formatted_address) > 0:
+            city = formatted_address[-2]
+            country = formatted_address[-1]
+        else:
+            city = ''
+            country = formatted_address[0]
 
-            entry = core.geo_api.location.Location(city if city else '', country, latitude, longitude)
-            extracted.append(entry)
+        latitude = location['geometry']['location']['lat']
+        longitude = location['geometry']['location']['lng']
 
-        return extracted
+        return core.geo_api.location.Location(id_, city, country, latitude, longitude)
