@@ -223,6 +223,60 @@ paths:
           description: ''
       tags:
         - aggregates
+  /aggregates/location/documents/:
+    get:
+      operationId: Get location aggregate documents
+      description: "Get repository documents grouped by location. If `location_id` is not specified, value `unknown` 
+      is implied. If pagination parameters are not used, only value of `results` field is returned."
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum:
+              - scientific
+              - pilot
+            example: 'scientific'
+          required: false
+          description: "Filter aggregate by document type."
+        - in: query
+          name: location_id
+          schema:
+            type: string
+            example: 'ChIJuYlLZidOTg0RRaaVHsSsNGU'
+          required: false
+          description: "Filter aggregate by location."
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            example: 5
+          required: false
+          description: "Limit number of results."
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            example: 5
+          required: false
+          description: "Return results starting with offset."
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRepositoryDocuments'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FormError'
+          description: ''
+      tags:
+        - aggregates
   /aggregates/heatmap/:
     get:
       operationId: Get heatmap aggregate
@@ -1238,6 +1292,16 @@ components:
           type: string
           format: url
           example: 'http://api.mesoc.dev/aggregates/heatmap/?latitude=45.3430600000000000&longitude=14.4091700000000000'
+    RepositoryDocument:
+      type: object
+      properties:
+        document_title:
+          type: string
+          description: "Document's title in the repository."
+        preview_url:
+          type: string
+          format: url
+          description: "Repository view of the document."
     HeatmapAggregate:
       type: object
       properties:
@@ -1274,6 +1338,29 @@ components:
           type: string
           format: url
           example: 'http://api.mesoc.dev/aggregates/similar/impact/?latitude=45.3430600000000000&longitude=14.4091700000000000&impact=2'
+    PaginatedRepositoryDocuments:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        next:
+          type:
+            - string
+            - 'null'
+          format: url
+          null: true
+          example: 'http://api.mesoc.dev/aggregates/location/documents/?location_id=unknown&limit=10&offset=20'
+        previous:
+          type:
+            - string
+            - 'null'
+          format: url
+          example: 'http://api.mesoc.dev/aggregates/location/documents/?location_id=unknown&limit=10&offset=0'
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepositoryDocument'
 
   securitySchemes:
     DRFToken:

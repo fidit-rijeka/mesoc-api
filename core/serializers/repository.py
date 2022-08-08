@@ -5,6 +5,17 @@ from rest_framework.serializers import ModelSerializer, SerializerMethodField
 from ..models import RepositoryDocument
 
 
+class RepositoryDocumentSerializer(ModelSerializer):
+    preview_url = SerializerMethodField()
+
+    class Meta:
+        model = RepositoryDocument
+        fields = ('document_title', 'preview_url')
+
+    def get_preview_url(self, obj):
+        return '{}/{}.html'.format(settings.CORE_REPOSITORY_PREVIEW_URL, obj.id)
+
+
 class SimilarDocumentSerializer(ModelSerializer):
     preview_url = SerializerMethodField()
     similarity = SerializerMethodField()

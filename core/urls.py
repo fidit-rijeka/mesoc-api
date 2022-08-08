@@ -3,8 +3,8 @@ from django.urls import include, path
 from rest_framework.routers import SimpleRouter
 
 from .views.aggregate import (
-    AggregateCellSimilarityView, AggregateHeatmapView, AggregateImpactView, AggregateLocationView,
-    AggregateImpactSimilarityView
+    AggregateCellSimilarityView, AggregateDocumentView, AggregateHeatmapView, AggregateImpactView,
+    AggregateLocationView, AggregateImpactSimilarityView
 )
 from .views.cell import CellViewSet
 from .views.impact import DocumentImpactViewSet
@@ -37,6 +37,7 @@ urlpatterns = [
         name='account',
     ),
     path('aggregates/location/', AggregateLocationView().as_view(), name='aggregate-location'),
+    path('aggregates/location/documents/', AggregateDocumentView().as_view(), name='aggregate-documents'),
     path('aggregates/heatmap/', AggregateHeatmapView().as_view(), name='aggregate-heatmap'),
     path('aggregates/impact/', AggregateImpactView().as_view(), name='aggregate-impact'),
     path('aggregates/similar/cell/', AggregateCellSimilarityView().as_view(), name='aggregate-cell-similar'),
