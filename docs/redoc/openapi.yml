@@ -1243,7 +1243,7 @@ components:
       properties:
         title:
           type: string
-          maxLength: 100
+          maxLength: 250
           example: 'Necronomicon'
           uniqueItems: true
         abstract:
@@ -1297,7 +1297,7 @@ components:
       properties:
         title:
           type: string
-          maxLength: 100
+          maxLength: 250
           example: 'My document'
           uniqueItems: true
         abstract:

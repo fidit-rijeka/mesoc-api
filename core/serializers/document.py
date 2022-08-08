@@ -40,7 +40,7 @@ class BaseDocumentSerializer(HyperlinkedModelSerializer):
 
 
 class DocumentSerializer(BaseDocumentSerializer):
-    title = CharField(max_length=100, validators=(MinLengthValidator(1),), read_only=True)
+    title = CharField(max_length=250, validators=(MinLengthValidator(1),), read_only=True)
     heatmap = SerializerMethodField()
     impacts = SerializerMethodField()
     classification = SerializerMethodField()
@@ -67,7 +67,7 @@ class DocumentSerializer(BaseDocumentSerializer):
 
 
 class DocumentUploadSerializer(BaseDocumentSerializer):
-    title = CharField(max_length=100, validators=(MinLengthValidator(1),))
+    title = CharField(max_length=250, validators=(MinLengthValidator(1),))
     location = CharField(required=False)
     heatmap = SerializerMethodField(read_only=True)
     impacts = SerializerMethodField(read_only=True)
