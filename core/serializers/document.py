@@ -8,7 +8,7 @@ from rest_framework.serializers import (
 
 from core.models import Document, Location
 from core.serializers.language import LanguageSerializer
-from core.serializers.location import LocationSerializer
+from core.serializers.location import GeocodedLocationSerializer
 from core.validators import FileMaxSizeValidator, FileMimeTypeValidator
 
 
@@ -26,7 +26,7 @@ class BaseDocumentSerializer(HyperlinkedModelSerializer):
         return LanguageSerializer(obj.language, context=self.context).data
 
     def get_location(self, obj):
-        return LocationSerializer(obj.location, context=self.context).data
+        return GeocodedLocationSerializer(obj.location, context=self.context).data
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -61,7 +61,7 @@ class DocumentSerializer(BaseDocumentSerializer):
 
 class DocumentUploadSerializer(BaseDocumentSerializer):
     title = CharField(max_length=100, validators=(MinLengthValidator(1),))
-    location = CharField(max_length=142, required=False)
+    location = CharField(required=False)
     heatmap = SerializerMethodField(read_only=True)
     impacts = SerializerMethodField(read_only=True)
     user = SerializerMethodField(read_only=True)
@@ -98,9 +98,12 @@ class DocumentUploadSerializer(BaseDocumentSerializer):
 
         location = validated_data.pop('location', None)
         if location is None:
-            location = Location.objects.filter(city='Unknown', country='Unknown').get()
+            location = Location.objects.filter(location_id='unknown').get()
         else:
-            if location.pk is None:
+            try:
+                location = Location.objects.filter(location_id=location).get()
+            except Location.DoesNotExist:
+                location = Location.search_api_by_id(location)
                 location.save()
 
         obj = super().create(validated_data)
@@ -118,12 +121,6 @@ class DocumentUploadSerializer(BaseDocumentSerializer):
         return value
 
     def validate_location(self, value):
-        loc = Location.search_api(address=value)
-        if len(loc) == 0:
-            raise ValidationError('Location with the specified address not found.', code='invalid')
-        if len(loc) != 1:
-            raise ValidationError('Location with the specified address is not unique.', code='invalid')
-        else:
-            loc = loc[0]
-
-        return loc
+        if not Location.verify_place_id(value):
+            raise ValidationError('Specified location id is not valid.', code='invalid')
+        return value

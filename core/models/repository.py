@@ -6,26 +6,20 @@ from django.db.models import (
 
 
 class RepositoryCellManager(Manager):
-    def get_aggregate(self, latitude=None, longitude=None, type_=None):
+    def get_aggregate(self, location_id=None, type_=None):
         aggregate = self.select_related('location').select_related('document')
 
-        type_ = getattr(RepositoryDocument, type_.upper(), '')
+        type_ = getattr(RepositoryDocument, type_.upper(), '') if type_ else None
         aggregate = aggregate.filter(document__type=type_) if type_ else aggregate
-        aggregate = aggregate.filter(document__locations__latitude=latitude) if latitude is not None else aggregate
-        aggregate = aggregate.filter(document__locations__longitude=longitude) if longitude is not None else aggregate
+        aggregate = aggregate.filter(document__locations__location_id=location_id) if location_id else aggregate
 
         return aggregate.values('cell').annotate(classification=Avg('classification'))
 
 
 class RepositoryCellKeywordManager(Manager):
-    def get_aggregate_keywords(self, cell=None, latitude=None, longitude=None, type_=None):
-        aggregate = self.filter(cell__cell=cell) if cell is not None else self
-
-        if latitude:
-            aggregate = aggregate.filter(cell__document__locations__latitude=latitude)
-
-        if longitude:
-            aggregate = aggregate.filter(cell__document__locations__longitude=longitude)
+    def get_aggregate_keywords(self, cell=None, location_id=None, type_=None):
+        aggregate = self.filter(cell__cell=cell) if cell else self
+        aggregate = aggregate.filter(cell__document__locations__location_id=location_id) if location_id else aggregate
 
         aggregate = aggregate.filter(cell__document__type=type_) if type_ else aggregate
 
@@ -33,12 +27,11 @@ class RepositoryCellKeywordManager(Manager):
 
 
 class RepositoryDocumentImpactManager(Manager):
-    def get_aggregate(self, column, latitude=None, longitude=None, type_=None):
+    def get_aggregate(self, column, location_id=None, type_=None):
         aggregate = self.select_related('document').select_related('impact').prefetch_related('keywords')
 
         aggregate = aggregate.filter(impact__column=column)
-        aggregate = aggregate.filter(document__locations__latitude=latitude) if latitude is not None else aggregate
-        aggregate = aggregate.filter(document__locations__longitude=longitude) if longitude is not None else aggregate
+        aggregate = aggregate.filter(document__locations__location_id=location_id) if location_id else aggregate
         aggregate = aggregate.filter(document__type=type_) if type_ else aggregate
 
         aggregate_values = aggregate.values('impact__id', 'impact__column', 'impact__value').distinct()
@@ -70,12 +63,11 @@ class RepositoryDocumentImpactManager(Manager):
 
         return data
 
-    def get_aggregate_keywords(self, impact, latitude=None, longitude=None, type_=None):
+    def get_aggregate_keywords(self, impact, location_id=None, type_=None):
         aggregate = self.select_related('document').select_related('impact').prefetch_related('keywords')
 
         aggregate = aggregate.filter(impact=impact) if impact else aggregate
-        aggregate = aggregate.filter(document__locations__latitude=latitude) if latitude is not None else aggregate
-        aggregate = aggregate.filter(document__locations__longitude=longitude) if longitude is not None else aggregate
+        aggregate = aggregate.filter(document__locations__location_id=location_id) if location_id else aggregate
         aggregate = aggregate.filter(document__type=type_) if type_ else aggregate
 
         return aggregate.values_list('keywords__value', flat=True)

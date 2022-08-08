@@ -1,39 +1,48 @@
 from django.conf import settings
-from django.db.models import Model, CharField, DecimalField
+from django.db.models import Model, CharField, DateField, DecimalField, TextField
 
 from core.geo_api.geo_api import GooglePlacesAPI
 
 
 class Location(Model):
-    location_id = CharField(max_length=512)
-    city = CharField(max_length=70, blank=True)
-    country = CharField(max_length=70)
+    location_id = TextField()
+    address = CharField(max_length=250)
     longitude = DecimalField(max_digits=22, decimal_places=16, default=43.700278)
     latitude = DecimalField(max_digits=22, decimal_places=16, default=15.489444)
+    # Used for tracking Google ID expiration. Should be moved along with the ID in its own class.
+    updated_at = DateField(auto_now=True)
 
-    @property
-    def address(self):
-        return '{}, {}'.format(self.city, self.country) if self.city else self.country
+    api = GooglePlacesAPI(settings.CORE_GOOGLE_GEO_API_KEY)
 
     @classmethod
     def search_api(cls, address):
-        api = GooglePlacesAPI(settings.CORE_GOOGLE_GEO_API_KEY)
         locations = []
-        for loc in api.search(address):
-            try:
-                obj = Location.objects.filter(location_id=loc.id_).get()
-            except cls.DoesNotExist:
-                obj = cls(
-                    location_id=loc.id_,
-                    city=loc.city,
-                    country=loc.country,
-                    latitude=loc.latitude,
-                    longitude=loc.longitude
-                )
+        for loc in cls.api.search(address):
+            obj = cls(
+                location_id=loc.id_,
+                address=loc.address,
+                latitude=loc.latitude,
+                longitude=loc.longitude
+            )
 
             locations.append(obj)
 
         return locations
+
+    @classmethod
+    def search_api_suggestions(cls, address):
+        locations = [cls(location_id=loc.id_, address=loc.address) for loc in cls.api.search_autocomplete(address)]
+
+        return locations
+
+    @classmethod
+    def search_api_by_id(cls, id_):
+        loc = cls.api.search_place_id(id_)
+        return cls(location_id=loc.id_, address=loc.address, latitude=loc.latitude, longitude=loc.longitude)
+
+    @classmethod
+    def verify_place_id(cls, id_):
+        return cls.api.verify_place_id(id_)
 
     def __str__(self):
         return self.address

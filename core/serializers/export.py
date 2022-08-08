@@ -2,7 +2,7 @@ from rest_framework.serializers import CharField, IntegerField, ListField, Model
 from rest_framework.reverse import reverse
 
 from core.models import Cell, Document, DocumentImpact, Language
-from core.serializers.location import LocationSerializer
+from core.serializers.location import GeocodedLocationSerializer
 
 
 class CellExportSerializer(ModelSerializer):
@@ -33,9 +33,9 @@ class LanguageExportSerializer(ModelSerializer):
 
 
 class DocumentExportSerializer(ModelSerializer):
-    title = CharField(max_length=100, source='title', read_only=True)
+    title = CharField(max_length=100, read_only=True)
     language = LanguageExportSerializer()
-    location = LocationSerializer()
+    location = GeocodedLocationSerializer()
     keywords = ListField(source='keywords_list')
     cells = CellExportSerializer(many=True)
     impacts = DocumentImpactExportSerializer(many=True, source='document_impacts')
