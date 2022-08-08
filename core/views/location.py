@@ -17,7 +17,7 @@ class LocationView(APIView):
     def get(self, request):
         form = type(self).form_class(request.query_params)
         if form.is_valid():
-            locations = Location.search_api(form.cleaned_data['address'])
+            locations = Location.search_api_suggestions(form.cleaned_data['address'])
             serializer = LocationSerializer(locations, many=True)
 
             data = serializer.data

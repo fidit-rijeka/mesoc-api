@@ -223,10 +223,64 @@ paths:
           description: ''
       tags:
         - aggregates
+  /aggregates/location/documents/:
+    get:
+      operationId: Get location aggregate documents
+      description: "Get repository documents grouped by location. If `location_id` is not specified, value `unknown` 
+      is implied. If pagination parameters are not used, only value of `results` field is returned."
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum:
+              - scientific
+              - pilot
+            example: 'scientific'
+          required: false
+          description: "Filter aggregate by document type."
+        - in: query
+          name: location_id
+          schema:
+            type: string
+            example: 'ChIJuYlLZidOTg0RRaaVHsSsNGU'
+          required: false
+          description: "Filter aggregate by location."
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            example: 5
+          required: false
+          description: "Limit number of results."
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            example: 5
+          required: false
+          description: "Return results starting with offset."
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRepositoryDocuments'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FormError'
+          description: ''
+      tags:
+        - aggregates
   /aggregates/heatmap/:
     get:
       operationId: Get heatmap aggregate
-      description: "Get average classification by cell. If exact GPS coordinates are not specified, the response won't
+      description: "Get average classification by cell. If `location_id` is not specified, the response won't
       contain `similar_documents` key."
       parameters:
         - in: query
@@ -240,19 +294,12 @@ paths:
           required: false
           description: "Filter aggregate by document type."
         - in: query
-          name: latitude
+          name: location_id
           schema:
-            type: number
-            example: 52.520008
+            type: string
+            example: 'ChIJuYlLZidOTg0RRaaVHsSsNGU'
           required: false
-          description: "Filter aggregate by latitude. If specified, then longitude must be specified as well."
-        - in: query
-          name: longitude
-          schema:
-            type: number
-            example: 13.404954
-          required: false
-          description: "Filter aggregate by longitude. If specified, then latitude must be specified as well."
+          description: "Filter aggregate by location."
       responses:
         '200':
           content:
@@ -275,7 +322,7 @@ paths:
   /aggregates/impact/:
     get:
       operationId: Get impact aggregate
-      description: "Get impact aggregate. If exact GPS coordinates are not specified, the response won't contain
+      description: "Get impact aggregate. If `location_id` coordinates are not specified, the response won't contain
       `similar_documents` key."
       parameters:
         - in: query
@@ -289,19 +336,12 @@ paths:
           required: false
           description: "Filter aggregate by document type."
         - in: query
-          name: latitude
+          name: location_id
           schema:
-            type: number
-            example: 52.520008
+            type: string
+            example: 'ChIJuYlLZidOTg0RRaaVHsSsNGU'
           required: false
-          description: "Filter aggregate by latitude. If specified, then longitude must be specified as well."
-        - in: query
-          name: longitude
-          schema:
-            type: number
-            example: 13.404954
-          required: false
-          description: "Filter aggregate by longitude. If specified, then latitude must be specified as well."
+          description: "Filter aggregate by location."
         - in: query
           name: column
           schema:
@@ -336,19 +376,22 @@ paths:
       description: 'Get cell similar documents of a heatmap aggregate.'
       parameters:
         - in: query
-          name: latitude
+          name: type
           schema:
-            type: number
-            example: 52.520008
-          required: true
-          description: "Filter aggregate by latitude."
+            type: string
+            enum:
+              - scientific
+              - pilot
+            example: 'scientific'
+          required: false
+          description: "Filter aggregate by document type."
         - in: query
-          name: longitude
+          name: location_id
           schema:
-            type: number
-            example: 13.404954
+            type: string
+            example: 'ChIJuYlLZidOTg0RRaaVHsSsNGU'
           required: true
-          description: "Filter aggregate by longitude."
+          description: "Filter aggregate by location."
         - in: query
           name: cell
           schema:
@@ -393,19 +436,12 @@ paths:
           required: false
           description: "Filter aggregate by document type."
         - in: query
-          name: latitude
+          name: location_id
           schema:
-            type: number
-            example: 52.520008
+            type: string
+            example: 'ChIJuYlLZidOTg0RRaaVHsSsNGU'
           required: true
-          description: "Filter aggregate by latitude. If specified, then longitude must be specified as well."
-        - in: query
-          name: longitude
-          schema:
-            type: number
-            example: 13.404954
-          required: true
-          description: "Filter aggregate by longitude. If specified, then latitude must be specified as well."
+          description: "Filter aggregate by location."
         - in: query
           name: impact
           schema:
@@ -670,6 +706,28 @@ paths:
         - DRFToken: []
       tags:
         - documents
+    delete:
+      operationId: Delete document
+      description: Delete unsuccessfully processed document. Requires the user to be authenticated and verified.
+      responses:
+        '204':
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormError'
+          description: 'Document with the specified `id` has been successfully processed.'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+          description: 'Document with the specified `id` does not belong to the authenticated user or does not exist.'
+      security:
+        - DRFToken: []
+      tags:
+        - documents
   /documents/{id}/heatmap/:
     parameters:
       - name: id
@@ -878,6 +936,12 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Location'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormError'
           description: ''
       security:
         - DRFToken: []
@@ -1138,27 +1202,31 @@ components:
     Location:
       type: object
       properties:
+        location_id:
+          type: string
+          example: 'ChIJuYlLZidOTg0RRaaVHsSsNGU'
         address:
           type: string
           minLength: 1
-          maxLength: 142
+          maxLength: 250
           example: 'Rijeka, Croatia'
-        city:
+    GeocodedLocation:
+      type: object
+      properties:
+        location_id:
+          type: string
+          example: 'ChIJuYlLZidOTg0RRaaVHsSsNGU'
+        address:
           type: string
           minLength: 1
-          maxLength: 70
-          example: 'Rijeka'
+          maxLength: 250
+          example: 'Rijeka, Croatia'
         longitude:
           type: number
           example: 14.4091700000000000
         latitude:
           type: number
           example: 45.3430600000000000
-        country:
-          type: string
-          minLength: 1
-          maxLength: 70
-          example: 'Croatia'
     State:
       type: object
       properties:
@@ -1203,10 +1271,7 @@ components:
         language:
           $ref: '#/components/schemas/Language'
         location:
-          $ref: '#/components/schemas/Location'
-        reclassified:
-          type: boolean
-          example: false
+          $ref: '#/components/schemas/GeocodedLocation'
         heatmap:
           type: string
           format: url
@@ -1252,8 +1317,8 @@ components:
           example: 'http://api.mesoc.dev/languages/2/'
         location:
           type: string
-          description: 'Location address.'
-          example: 'Rijeka, Croatia'
+          description: 'Location identifier.'
+          example: 'ChIJuYlLZidOTg0RRaaVHsSsNGU'
         file:
           type: string
           format: file
@@ -1274,27 +1339,20 @@ components:
     LocationAggregate:
       type: object
       properties:
+        location_id:
+          type: string
+          example: 'ChIJuYlLZidOTg0RRaaVHsSsNGU'
         address:
           type: string
           minLength: 1
-          maxLength: 142
+          maxLength: 250
           example: 'Rijeka, Croatia'
-        city:
-          type: string
-          minLength: 1
-          maxLength: 70
-          example: 'Rijeka'
         longitude:
           type: number
           example: 14.4091700000000000
         latitude:
           type: number
           example: 45.3430600000000000
-        country:
-          type: string
-          minLength: 1
-          maxLength: 70
-          example: 'Croatia'
         num_scientific:
           type: integer
           description: 'Number of scientific studies.'
@@ -1307,6 +1365,16 @@ components:
           type: string
           format: url
           example: 'http://api.mesoc.dev/aggregates/heatmap/?latitude=45.3430600000000000&longitude=14.4091700000000000'
+    RepositoryDocument:
+      type: object
+      properties:
+        document_title:
+          type: string
+          description: "Document's title in the repository."
+        preview_url:
+          type: string
+          format: url
+          description: "Repository view of the document."
     HeatmapAggregate:
       type: object
       properties:
@@ -1343,6 +1411,29 @@ components:
           type: string
           format: url
           example: 'http://api.mesoc.dev/aggregates/similar/impact/?latitude=45.3430600000000000&longitude=14.4091700000000000&impact=2'
+    PaginatedRepositoryDocuments:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        next:
+          type:
+            - string
+            - 'null'
+          format: url
+          null: true
+          example: 'http://api.mesoc.dev/aggregates/location/documents/?location_id=unknown&limit=10&offset=20'
+        previous:
+          type:
+            - string
+            - 'null'
+          format: url
+          example: 'http://api.mesoc.dev/aggregates/location/documents/?location_id=unknown&limit=10&offset=0'
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepositoryDocument'
 
   securitySchemes:
     DRFToken:
