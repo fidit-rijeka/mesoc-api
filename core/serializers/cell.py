@@ -13,3 +13,12 @@ class CellSerializer(HyperlinkedModelSerializer):
 
     def get_similar_documents(self, obj):
         return reverse('cell-similar', args=(obj.pk,), request=self.context['request'])
+
+
+class HistoricalCellSerializer(CellSerializer):
+    similar_documents = None
+    url = None
+
+    class Meta:
+        model = Cell
+        fields = ('cell', 'classification', 'document')

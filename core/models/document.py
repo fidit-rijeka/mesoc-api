@@ -43,6 +43,7 @@ class Document(Model):
     locations = ManyToManyField('core.Location', through='core.DocumentLocation', related_name='locations')
     language = ForeignKey('core.Language', on_delete=PROTECT)
     impacts = ManyToManyField('core.Impact', through='core.DocumentImpact', related_name='documents')
+    reclassified = BooleanField(blank=True, default=False)
     user = ForeignKey(auth.get_user_model(), on_delete=CASCADE, related_name='documents')
 
     def __init__(self, *args, **kwargs):
