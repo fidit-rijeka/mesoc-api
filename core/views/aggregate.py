@@ -3,6 +3,7 @@ import collections
 from django.conf import settings
 from django.db.models import Count
 
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.reverse import reverse
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView, Response
@@ -17,7 +18,7 @@ from core.models import (
     Location
 )
 
-from core.serializers.repository import SimilarDocumentSerializer
+from core.serializers.repository import RepositoryDocumentSerializer, SimilarDocumentSerializer
 from core.serializers.location import GeocodedLocationSerializer
 
 from core.nlp.processing import KeyphraseToKeywordProcessor
@@ -54,6 +55,10 @@ class AggregateLocationView(APIView):
                     'heatmap': '{}?location_id={}'.format(
                         reverse('aggregate-heatmap', request=request),
                         place.location_id
+                    ),
+                    'documents': '{}?location_id={}'.format(
+                        reverse('aggregate-documents', request=request),
+                        place.location_id
                     )
                 }
             )
@@ -61,6 +66,34 @@ class AggregateLocationView(APIView):
             data.append(d)
 
         return Response(data=data, status=HTTP_200_OK)
+
+
+class AggregateDocumentView(APIView):
+    form_class = AggregateHeatmapForm
+
+    def get(self, request):
+        form = self.form_class(request.query_params)
+        if form.is_valid():
+            id_ = form.cleaned_data['location_id'] if form.cleaned_data['location_id'] else 'unknown'
+            type_ = form.cleaned_data['type'] if form.cleaned_data['type'] else None
+
+            documents = RepositoryDocument.objects.filter(locations__location_id=id_)
+            documents = documents.filter(type=type_) if type_ else documents
+
+            pagination = LimitOffsetPagination()
+            page = pagination.paginate_queryset(documents, request=request)
+            if page:
+                data = RepositoryDocumentSerializer(page, many=True).data
+                data = pagination.get_paginated_response(data).data
+            else:
+                data = RepositoryDocumentSerializer(documents, many=True).data
+
+            status = HTTP_200_OK
+        else:
+            status = HTTP_400_BAD_REQUEST
+            data = form.errors
+
+        return Response(data=data, status=status)
 
 
 class AggregateHeatmapView(APIView):
