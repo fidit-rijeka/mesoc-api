@@ -18,7 +18,7 @@ from core.models import (
 )
 
 from core.serializers.repository import SimilarDocumentSerializer
-from core.serializers.location import LocationSerializer
+from core.serializers.location import GeocodedLocationSerializer
 
 from core.nlp.processing import KeyphraseToKeywordProcessor
 from core.nlp.processing import keyword_processing
@@ -46,14 +46,14 @@ class AggregateLocationView(APIView):
         data = []
         places = Location.objects.filter(id__in=locations.keys()).order_by('id')
         for place in places:
-            d = LocationSerializer(place, context={'request': request}).data
+            d = GeocodedLocationSerializer(place, context={'request': request}).data
             d.update(
                 {
                     'num_scientific': locations[place.pk][0],
                     'num_pilot': locations[place.pk][1],
-                    'heatmap': 'https://api.mesoc.dev/aggregates/heatmap/?latitude={}&longitude={}'.format(
-                        place.latitude,
-                        place.longitude
+                    'heatmap': '{}?location_id={}'.format(
+                        reverse('aggregate-heatmap', request=request),
+                        place.location_id
                     )
                 }
             )
@@ -70,17 +70,14 @@ class AggregateHeatmapView(APIView):
         form = self.form_class(request.query_params)
 
         if form.is_valid():
-            type_ = form.cleaned_data.get('type', '')
-            latitude = form.cleaned_data.get('latitude')
-            longitude = form.cleaned_data.get('longitude')
-
-            aggregate = RepositoryCell.objects.get_aggregate(latitude, longitude, type_)
-            if latitude and longitude:
+            type_ = form.cleaned_data['type'] if form.cleaned_data['type'] != '' else None
+            id_ = form.cleaned_data['location_id'] if form.cleaned_data['location_id'] != '' else None
+            aggregate = RepositoryCell.objects.get_aggregate(id_, type_)
+            if id_:
                 for a in aggregate:
-                    a['similar_documents'] = '{}?latitude={}&longitude={}&cell={}'.format(
+                    a['similar_documents'] = '{}?location_id={}&cell={}'.format(
                         reverse('aggregate-cell-similar', request=request),
-                        latitude,
-                        longitude,
+                        id_,
                         a['cell']
                     )
 
@@ -99,21 +96,19 @@ class AggregateCellSimilarityView(APIView):
     def get(self, request, *ags, **kwargs):
         form = self.form_class(request.query_params)
         if form.is_valid():
-            type_ = form.cleaned_data.get('type', '')
+            type_ = form.cleaned_data['type'] if form.cleaned_data['type'] != '' else None
             cell = form.cleaned_data['cell']
-            latitude = form.cleaned_data['latitude']
-            longitude = form.cleaned_data['longitude']
+            id_ = form.cleaned_data['location_id']
 
-            agg_keywords = RepositoryCellKeyword.objects.get_aggregate_keywords(cell, latitude, longitude, type_)
+            agg_keywords = RepositoryCellKeyword.objects.get_aggregate_keywords(cell, id_, type_)
             processor = KeyphraseToKeywordProcessor()
             agg_keywords = set(processor.process(agg_keywords))
 
             if agg_keywords:
                 cells = RepositoryCell.objects.filter(
-                    cell=form.cleaned_data['cell'],
+                    cell=cell,
                 ).exclude(
-                    document__locations__longitude=form.cleaned_data['longitude'],
-                    document__locations__latitude=form.cleaned_data['latitude']
+                    document__locations__location_id=id_,
                 ).select_related('document').prefetch_related('keywords')
 
                 top = []
@@ -152,20 +147,18 @@ class AggregateImpactView(APIView):
         form = self.form_class(request.query_params)
 
         if form.is_valid():
-            aggregate = RepositoryDocumentImpact.objects.get_aggregate(
-                form.cleaned_data['column'],
-                form.cleaned_data['latitude'],
-                form.cleaned_data['longitude'],
-                form.cleaned_data['type']
-            )
+            column = form.cleaned_data['column']
+            id_ = form.cleaned_data['location_id'] if form.cleaned_data['location_id'] else None
+            type_ = form.cleaned_data['type'] if form.cleaned_data['type'] else None
+
+            aggregate = RepositoryDocumentImpact.objects.get_aggregate(column, id_, type_)
 
             for a in aggregate:
                 impact_id = a.pop('impact_id')
-                if form.cleaned_data['latitude'] and form.cleaned_data['longitude']:
-                    a['similar_documents'] = '{}?latitude={}&longitude={}&impact={}'.format(
+                if id_:
+                    a['similar_documents'] = '{}?location_id={}&impact={}'.format(
                         reverse('aggregate-impact-similar', request=request),
-                        form.cleaned_data['latitude'],
-                        form.cleaned_data['longitude'],
+                        id_,
                         impact_id
                     )
 
@@ -186,14 +179,12 @@ class AggregateImpactSimilarityView(APIView):
 
         if form.is_valid():
             impact = form.cleaned_data['impact']
-            latitude = form.cleaned_data['latitude']
-            longitude = form.cleaned_data['longitude']
-            type_ = form.cleaned_data['type']
+            id_ = form.cleaned_data['location_id'] if form.cleaned_data['location_id'] != '' else None
+            type_ = form.cleaned_data['type'] if form.cleaned_data['type'] != '' else None
 
             aggregate_keywords = RepositoryDocumentImpact.objects.get_aggregate_keywords(
                 impact,
-                latitude,
-                longitude,
+                id_,
                 type_
             )
 
@@ -202,10 +193,9 @@ class AggregateImpactSimilarityView(APIView):
 
             if aggregate_keywords:
                 impacts = RepositoryDocumentImpact.objects.filter(
-                    impact=form.cleaned_data['impact'],
+                    impact=impact,
                 ).exclude(
-                    document__locations__longitude=form.cleaned_data['longitude'],
-                    document__locations__latitude=form.cleaned_data['latitude']
+                    document__locations__location_id=id_
                 ).select_related('document').prefetch_related('keywords')
 
                 impacts = impacts.filter(document__type=type_) if type_ else impacts

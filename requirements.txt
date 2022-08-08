@@ -10,6 +10,6 @@ scikit-learn==0.24.2
 textacy==0.11.0
 git+https://github.com/boudinfl/pke.git@f651015f9c931cf245a753f4457bb49f0befa5fd
 google-cloud-translate==2.0.1
-geopy==2.2.0
 mysqlclient==2.1.0
 cryptography==36.0.1
+googlemaps==4.6.0

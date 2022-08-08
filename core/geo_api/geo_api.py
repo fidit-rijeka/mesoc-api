@@ -1,9 +1,8 @@
 import abc
 import logging
-import re
 
-import geopy.exc
-import geopy.geocoders
+import django.utils.crypto
+import googlemaps
 
 import core.geo_api.location
 
@@ -16,62 +15,89 @@ class BaseGeoAPI(abc.ABC):
         raise NotImplementedError
 
 
-class GoogleGeoAPI(BaseGeoAPI):
+class GooglePlacesAPI(BaseGeoAPI):
     def __init__(self, api_key):
-        self._api = geopy.geocoders.GoogleV3(api_key=api_key)
+        self._client = googlemaps.Client(api_key)
+        self._filter = {
+            'country', 'locality', 'administrative_area_level_1',
+            'administrative_area_level_2', 'administrative_area_level_3'
+        }
+
+        self._session = django.utils.crypto.get_random_string(64)
 
     def search(self, address):
-        locations = self._geocode_address(address)
-        filtered_locations = self._filter_political(locations)
-        extracted = self._extract_names(filtered_locations)
+        locations = self._search_places(address)
 
-        return extracted
+        locs = []
+        for location in locations:
+            try:
+                place = self._client.place(location['place_id'], session_token=self._session)['result']
+                locs.append(self._create_location(place))
+            except (googlemaps.exceptions.TransportError,
+                    googlemaps.exceptions.ApiError,
+                    googlemaps.exceptions.Timeout) as e:
+                logger.error('An error occurred during Google Places call: %s.', e)
 
-    def _geocode_address(self, address):
-        try:
-            response = self._api.geocode(address, exactly_one=False)
-        except geopy.exc.GeocoderQueryError as e:
-            response = None
-            logger.error(e, exc_info=True)
+        return locs
 
-        if response is not None:
-            logger.info('Listing locations: {}.'.format(response))
-            locations = response
-        else:
-            locations = []
-
-        logger.debug('Found {} locations.'.format(len(locations)))
+    def search_autocomplete(self, address):
+        locations = self._search_places(address)
+        locations = [
+            core.geo_api.location.Location(location['place_id'], location['description']) for location in locations
+        ]
 
         return locations
 
-    def _filter_political(self, locations):
-        political_list = [
-            x for x in locations if ('political' in x.raw['types'])  # or ('natural_feature' in x.raw['types'])
-        ]
-        return political_list
+    def search_place_id(self, id_):
+        try:
+            loc = self._client.place(id_, session_token=self._session)['result']
+        except (googlemaps.exceptions.TransportError,
+                googlemaps.exceptions.ApiError,
+                googlemaps.exceptions.Timeout) as e:
+            loc = None
+            logger.error('An error occurred during Google Places call: %s.', e)
 
-    def _extract_names(self, locations):
-        extracted = []
-        raw_list = [x.raw for x in locations]
-        for loc in raw_list:
-            address = loc['formatted_address']
-            address = ''.join([i for i in address if not i.isdigit()])
-            location = loc['geometry']
-            latitude = location['location']['lat']
-            longitude = location['location']['lng']
+        return self._create_location(loc) if loc is not None else None
 
-            address = re.split(r',| - ', address)
-            address = [x.strip() for x in address]
-            address = [a for a in address if a]
-
-            if len(address) == 1:
-                city = None
-                country = address[0]
+    def verify_place_id(self, id_):
+        try:
+            status = self._client.place(id_, session_token=self._session, fields=('place_id',))['status']
+            if status == 'OK':
+                verification = True
             else:
-                city = address[0]
-                country = address[-1]
+                if status == 'NOT FOUND':
+                    logger.info('Place ID %s expired, needs refresh.', id_)
+                else:
+                    logger.warning('Google Places API call returned status %s.', status)
 
-            entry = core.geo_api.location.Location(city if city else '', country, latitude, longitude)
-            extracted.append(entry)
+                verification = False
+        except googlemaps.exceptions.ApiError:
+            verification = False
+        except (googlemaps.exceptions.TransportError, googlemaps.exceptions.Timeout) as e:
+            verification = False
+            logger.error('An error occurred during Google Places call: %s.', e)
 
-        return extracted
+        return verification
+
+    def _search_places(self, address):
+        try:
+            locations = self._client.places_autocomplete(
+                address, types='|'.join(self._filter),
+                session_token=self._session
+            )
+            logger.debug('Found {} locations.'.format(len(locations)))
+        except (googlemaps.exceptions.TransportError,
+                googlemaps.exceptions.ApiError,
+                googlemaps.exceptions.Timeout) as e:
+            locations = []
+            logger.error('An error occurred during Google Places call: %s.', e)
+
+        return locations
+
+    def _create_location(self, location):
+        id_ = location['place_id']
+        formatted_address = location['formatted_address']
+        latitude = location['geometry']['location']['lat']
+        longitude = location['geometry']['location']['lng']
+
+        return core.geo_api.location.GeocodedLocation(id_, formatted_address, latitude, longitude)
