@@ -6,30 +6,24 @@ from core.models import Impact, Location, RepositoryDocument
 
 class AggregateHeatmapForm(Form):
     type = ChoiceField(choices=RepositoryDocument.TYPES.items(), required=False)
-    location_id = ChoiceField(
-        choices=[(id_, id_) for id_ in Location.objects.values_list('location_id', flat=True)],
-        required=False
-    )
+    location_id = ModelChoiceField(queryset=Location.objects.all(), required=False)
 
 
 class AggregateCellSimilarityForm(Form):
     type = ChoiceField(choices=RepositoryDocument.TYPES.items(), required=False)
     cell = IntegerField(validators=(MinValueValidator(0), MaxValueValidator(29)))
-    location_id = ChoiceField(choices=[(id_, id_) for id_ in Location.objects.values_list('location_id', flat=True)])
+    location_id = ModelChoiceField(queryset=Location.objects.all())
 
 
 class AggregateImpactForm(Form):
     type = ChoiceField(choices=RepositoryDocument.TYPES.items(), required=False)
-    location_id = ChoiceField(
-        choices=[(id_, id_) for id_ in Location.objects.values_list('location_id', flat=True)],
-        required=False
-    )
+    location_id = ModelChoiceField(queryset=Location.objects.all(), required=False)
     column = IntegerField(min_value=0, max_value=2)
 
 
 class AggregateImpactSimilarityForm(Form):
     type = ChoiceField(choices=RepositoryDocument.TYPES.items(), required=False)
-    location_id = ChoiceField(choices=[(id_, id_) for id_ in Location.objects.values_list('location_id', flat=True)])
+    location_id = ModelChoiceField(queryset=Location.objects.all())
     impact = ModelChoiceField(queryset=Impact.objects.all())
 
 
