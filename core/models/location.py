@@ -10,7 +10,7 @@ class Location(Model):
     longitude = DecimalField(max_digits=22, decimal_places=16, default=43.700278)
     latitude = DecimalField(max_digits=22, decimal_places=16, default=15.489444)
     # Used for tracking Google ID expiration. Should be moved along with the ID in its own class.
-    updated_at = DateField(auto_now=True)
+    updated_at = DateField(auto_now=True, null=True)
 
     api = GooglePlacesAPI(settings.CORE_GOOGLE_GEO_API_KEY)
 
