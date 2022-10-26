@@ -1330,6 +1330,16 @@
         }
     },
     {
+        "model": "core.location",
+        "pk": 921,
+            "fields": {
+                "location_id": "ChIJpw60yQyNeUgRCYa0DcycFP4",
+                "address": "Ripley DE5, UK",
+                "longitude": "-1.4057919999999999305373421520926058292388916015625",
+                "latitude": "53.05281900000000661066223983652889728546142578125"
+            }
+        },
+    {
         "model": "core.Location",
         "pk": 922,
         "fields": {
@@ -1339,6 +1349,7 @@
             "latitude": "53.1434501000000000"
         }
     },
+
     {
         "model": "core.Location",
         "pk": 923,
