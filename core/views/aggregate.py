@@ -74,7 +74,7 @@ class AggregateDocumentView(APIView):
     def get(self, request):
         form = self.form_class(request.query_params)
         if form.is_valid():
-            id_ = form.cleaned_data['location_id'] if form.cleaned_data['location_id'] else 'unknown'
+            id_ = form.cleaned_data['location_id'].location_id if form.cleaned_data['location_id'] else 'unknown'
             type_ = form.cleaned_data['type'] if form.cleaned_data['type'] else None
 
             documents = RepositoryDocument.objects.filter(locations__location_id=id_)
@@ -104,7 +104,7 @@ class AggregateHeatmapView(APIView):
 
         if form.is_valid():
             type_ = form.cleaned_data['type'] if form.cleaned_data['type'] != '' else None
-            id_ = form.cleaned_data['location_id'] if form.cleaned_data['location_id'] != '' else None
+            id_ = form.cleaned_data['location_id'].location_id if form.cleaned_data['location_id'] else None
             aggregate = RepositoryCell.objects.get_aggregate(id_, type_)
             if id_:
                 for a in aggregate:
@@ -131,7 +131,7 @@ class AggregateCellSimilarityView(APIView):
         if form.is_valid():
             type_ = form.cleaned_data['type'] if form.cleaned_data['type'] != '' else None
             cell = form.cleaned_data['cell']
-            id_ = form.cleaned_data['location_id']
+            id_ = form.cleaned_data['location_id'].location_id
 
             agg_keywords = RepositoryCellKeyword.objects.get_aggregate_keywords(cell, id_, type_)
             processor = KeyphraseToKeywordProcessor()
@@ -181,7 +181,7 @@ class AggregateImpactView(APIView):
 
         if form.is_valid():
             column = form.cleaned_data['column']
-            id_ = form.cleaned_data['location_id'] if form.cleaned_data['location_id'] else None
+            id_ = form.cleaned_data['location_id'].location_id if form.cleaned_data['location_id'] else None
             type_ = form.cleaned_data['type'] if form.cleaned_data['type'] else None
 
             aggregate = RepositoryDocumentImpact.objects.get_aggregate(column, id_, type_)
@@ -212,7 +212,7 @@ class AggregateImpactSimilarityView(APIView):
 
         if form.is_valid():
             impact = form.cleaned_data['impact']
-            id_ = form.cleaned_data['location_id'] if form.cleaned_data['location_id'] != '' else None
+            id_ = form.cleaned_data['location_id'].location_id
             type_ = form.cleaned_data['type'] if form.cleaned_data['type'] != '' else None
 
             aggregate_keywords = RepositoryDocumentImpact.objects.get_aggregate_keywords(
