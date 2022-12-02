@@ -30,10 +30,8 @@ class DocumentImpactViewSet(RetrieveModelMixin, GenericViewSet):
 
         document_location = document_impact.document.locations.filter(documentlocation__primary=True).get()
         document_impacts = RepositoryDocumentImpact.objects.exclude(
-            document__locations__longitude=document_location.longitude,
-            document__locations__latitude=document_location.latitude,
+            document__locations__location_id=document_location.location_id
         )
-
         document_impacts = document_impacts.filter(impact__column=document_impact.impact.column)
         document_impacts = document_impacts.select_related('document').prefetch_related('keywords')
 
