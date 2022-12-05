@@ -34,8 +34,7 @@ class CellViewSet(RetrieveModelMixin, GenericViewSet):
         cells = RepositoryCell.objects.filter(
             cell=document_cell.cell,
         ).exclude(
-            document__locations__longitude=document_location.longitude,
-            document__locations__latitude=document_location.latitude,
+            document__locations__location_id=document_location.location_id
         ).select_related('document').prefetch_related('keywords')
 
         top = []
