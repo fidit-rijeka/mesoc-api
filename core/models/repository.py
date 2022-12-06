@@ -7,7 +7,7 @@ from django.db.models import (
 
 class RepositoryCellManager(Manager):
     def get_aggregate(self, location_id=None, type_=None):
-        aggregate = self.select_related('location').select_related('document')
+        aggregate = self.select_related('document').prefetch_related('document__locations')
 
         type_ = getattr(RepositoryDocument, type_.upper(), '') if type_ else None
         aggregate = aggregate.filter(document__type=type_) if type_ else aggregate
